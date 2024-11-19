@@ -12,28 +12,6 @@ module.exports = [
     method: "POST",
     path: "/register",
     options: {
-      pre: [
-        {
-          method: (request, h) => {
-            const apiKey = request.headers['x-api-key'];
-            if (apiKey !== process.env.API_KEY) {
-              throw Boom.unauthorized('Invalid API key');
-            }
-            return h.continue;
-          }
-        },
-        {
-          method: (request, h) => {
-            const allowedIPs = process.env.ALLOWED_IPS ? process.env.ALLOWED_IPS.split(',') : [];
-            const requestIP = request.info.remoteAddress;
-
-            if (!allowedIPs.includes(requestIP)) {
-              throw Boom.forbidden('Your IP is not allowed to access this resource.');
-            }
-            return h.continue;
-          }
-        },
-      ],
       validate: {
         payload: Joi.object({
           name: Joi.string().min(3).required(),
@@ -90,26 +68,29 @@ module.exports = [
     },
   },
   {
+    method: "GET",
+    path: "/register",
+    handler: (request, h) => {
+      return h.file('Documentation/denied.html').code(403);
+    },
+  },
+  {
+    method: "GET",
+    path: "/login",
+    handler: (request, h) => {
+      return h.file('Documentation/denied.html').code(403);
+    },
+  },
+  {
     method: "POST",
     path: "/login",
     options: {
-        pre: [
-            {
-                method: (request, h) => {
-                    const apiKey = request.headers['x-api-key'];
-                    if (apiKey !== process.env.API_KEY) {
-                        throw Boom.unauthorized('Invalid API key');
-                    }
-                    return h.continue;
-                }
-            }
-        ],
-        validate: {
-            payload: Joi.object({
-                email: Joi.string().email().required(),
-                password: Joi.string().min(6).required(),
-            }),
-        },
+      validate: {
+        payload: Joi.object({
+          email: Joi.string().email().required(),
+          password: Joi.string().min(6).required(),
+        }),
+      },
     },
     handler: async (request, h) => {
       const { email, password } = request.payload;
