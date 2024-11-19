@@ -13,18 +13,37 @@
             margin: 0;
             padding: 0;
             display: flex;
+            flex-direction: column;
             background-color: #f9f9f9;
             color: #333;
         }
 
+        @media (min-width: 768px) {
+            body {
+                flex-direction: row;
+            }
+        }
+
         .sidebar {
-            width: 300px;
+            width: 100%;
             background: #f8f9fa;
             color: #333;
-            padding: 30px;
-            height: 100vh;
-            position: fixed;
-            border-right: 1px solid #ddd;
+            padding: 20px;
+            border-bottom: 1px solid #ddd;
+            box-sizing: border-box;
+            display: none;
+        }
+
+        @media (min-width: 768px) {
+            .sidebar {
+                width: 300px;
+                height: 100vh;
+                padding: 30px;
+                border-right: 1px solid #ddd;
+                border-bottom: none;
+                position: fixed;
+                display: block;
+            }
         }
 
         .sidebar h2 {
@@ -35,16 +54,26 @@
         .sidebar ul {
             list-style: none;
             padding: 0;
+            display: flex;
+            flex-direction: row;
+            justify-content: space-around;
+        }
+
+        @media (min-width: 768px) {
+            .sidebar ul {
+                flex-direction: column;
+                justify-content: flex-start;
+            }
         }
 
         .sidebar ul li {
-            margin: 20px 0;
+            margin: 10px 0;
         }
 
         .sidebar ul li a {
             color: #333;
             text-decoration: none;
-            font-size: 1.1em;
+            font-size: 1em;
             padding: 5px 10px;
             display: block;
             border-radius: 4px;
@@ -57,9 +86,17 @@
         }
 
         .content {
-            margin-left: 350px;
-            padding: 60px;
+            margin: 20px;
+            padding: 20px;
             max-width: 1000px;
+            box-sizing: border-box;
+        }
+
+        @media (min-width: 768px) {
+            .content {
+                margin-left: 350px;
+                padding: 60px;
+            }
         }
 
         h1 {
@@ -133,8 +170,8 @@
             <h3>Request Body</h3>
             <pre>
 {
-    "name": "kuraimos",
-    "email": "kuraimoss@edubright.com",
+    "name": "John Doe",
+    "email": "john.doe@edubright.com",
     "password": "password123"
 }
             </pre>
@@ -145,8 +182,8 @@
     "message": "User registered successfully!",
     "registerResult": {
         "userId": "user-12345",
-        "name": "kuraimos",
-        "email": "kuraimoss@edubright.com"
+        "name": "John Doe",
+        "email": "john.doe@edubright.com"
     }
 }
             </pre>
@@ -155,11 +192,11 @@
 {
     "status": "error",
     "error": "The email address is already registered.",
-    "details": "Duplicate entry 'kuraimoss@edubright.com' for key 'email'",
+    "details": "Duplicate entry 'john.doe@edubright.com' for key 'email'",
     "registerResult": {
         "userId": null,
-        "name": "kuraimos",
-        "email": "kuraimoss@edubright.com"
+        "name": "John Doe",
+        "email": "john.doe@edubright.com"
     }
 }
             </pre>
@@ -173,7 +210,7 @@
             <h3>Request Body</h3>
             <pre>
 {
-    "email": "kuraimoss@edubright.com",
+    "email": "john.doe@edubright.com",
     "password": "password123"
 }
             </pre>
@@ -185,8 +222,8 @@
     "loginResult": {
         "token": "jwt_token_here",
         "userId": "user-12345",
-        "name": "kuraimos",
-        "email": "kuraimoss@edubright.com"
+        "name": "John Doe",
+        "email": "john.doe@edubright.com"
     }
 }
             </pre>
