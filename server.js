@@ -13,48 +13,52 @@ const init = async () => {
   } : null;
 
   // Create HTTP server
-  const httpServer = Hapi.server({
-    port: 80,
+  const server = Hapi.server({
+    port: process.env.PORT || 80,
     host: "0.0.0.0"
   });
 
-  // Create HTTPS server
-  const httpsServer = Hapi.server({
-    port: 443,
-    host: "0.0.0.0",
-    tls: tlsOptions
-  });
+  // Register inert plugin
+  await server.register(require("@hapi/inert"));
 
-  // Register inert plugin to both servers
-  await httpServer.register(require("@hapi/inert"));
-  await httpsServer.register(require("@hapi/inert"));
-
-  // Set routes for both servers
+  // Set routes for HTTP and HTTPS
   const routes = require("./Routes");
 
-  httpServer.route({
+  server.route({
     method: "GET",
     path: "/",
     handler: (request, h) => {
       return h.file(Path.join(__dirname, "Documentation", "index.html"));
     }
   });
-  httpServer.route(routes);
+  server.route(routes);
 
-  httpsServer.route({
-    method: "GET",
-    path: "/",
-    handler: (request, h) => {
-      return h.file(Path.join(__dirname, "Documentation", "index.html"));
-    }
-  });
-  httpsServer.route(routes);
+  // Start HTTP server
+  await server.start();
+  console.log("HTTP/HTTPS Server running on %s", server.info.uri);
 
-  // Start both servers
-  await httpServer.start();
-  await httpsServer.start();
-  console.log("HTTP Server running on %s", httpServer.info.uri);
-  console.log("HTTPS Server running on %s", httpsServer.info.uri);
+  // If TLS options are provided, start HTTPS server
+  if (tlsOptions) {
+    const httpsServer = Hapi.server({
+      port: 443,
+      host: "0.0.0.0",
+      tls: tlsOptions
+    });
+
+    await httpsServer.register(require("@hapi/inert"));
+
+    httpsServer.route({
+      method: "GET",
+      path: "/",
+      handler: (request, h) => {
+        return h.file(Path.join(__dirname, "Documentation", "index.html"));
+      }
+    });
+    httpsServer.route(routes);
+
+    await httpsServer.start();
+    console.log("HTTPS Server running on %s", httpsServer.info.uri);
+  }
 };
 
 process.on("unhandledRejection", (err) => {
