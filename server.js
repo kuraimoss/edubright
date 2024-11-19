@@ -12,27 +12,49 @@ const init = async () => {
     cert: fs.readFileSync(process.env.SSL_CERT)
   } : null;
 
-  const server = Hapi.server({
-    port: process.env.PORT || 80,
-    host: "0.0.0.0",
-    tls: tlsOptions // Enable HTTPS if tlsOptions are provided
+  // Create HTTP server
+  const httpServer = Hapi.server({
+    port: 80,
+    host: "0.0.0.0"
   });
 
-  await server.register(require("@hapi/inert"));
+  // Create HTTPS server
+  const httpsServer = Hapi.server({
+    port: 443,
+    host: "0.0.0.0",
+    tls: tlsOptions
+  });
 
-  server.route({
+  // Register inert plugin to both servers
+  await httpServer.register(require("@hapi/inert"));
+  await httpsServer.register(require("@hapi/inert"));
+
+  // Set routes for both servers
+  const routes = require("./Routes");
+
+  httpServer.route({
     method: "GET",
     path: "/",
     handler: (request, h) => {
       return h.file(Path.join(__dirname, "Documentation", "index.html"));
-    },
+    }
   });
+  httpServer.route(routes);
 
-  const routes = require("./Routes");
-  server.route(routes);
+  httpsServer.route({
+    method: "GET",
+    path: "/",
+    handler: (request, h) => {
+      return h.file(Path.join(__dirname, "Documentation", "index.html"));
+    }
+  });
+  httpsServer.route(routes);
 
-  await server.start();
-  console.log("Server running on %s", server.info.uri);
+  // Start both servers
+  await httpServer.start();
+  await httpsServer.start();
+  console.log("HTTP Server running on %s", httpServer.info.uri);
+  console.log("HTTPS Server running on %s", httpsServer.info.uri);
 };
 
 process.on("unhandledRejection", (err) => {
