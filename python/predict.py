@@ -14,61 +14,60 @@ def load_model(model_path):
 def prepare_data(input_text, tokenizer):
     token = tokenizer.encode_plus(
         input_text,
-        max_length=256,
-        truncation=True,
-        padding='max_length',
+        max_length=256, 
+        truncation=True, 
+        padding='max_length', 
         add_special_tokens=True,
         return_tensors='tf'
     )
     return {
-        'input_ids': tf.cast(token.input_ids, tf.int32),
-        'attention_mask': tf.cast(token.attention_mask, tf.int32)
+        'input_ids': tf.cast(token.input_ids, tf.int32),  # Pastikan 'input_ids' adalah INT32
+        'attention_mask': tf.cast(token.attention_mask, tf.int32)  # Pastikan 'attention_mask' adalah INT32
     }
 
 # Fungsi untuk membuat prediksi
 def make_prediction(model, processed_data, classes=['Awful', 'Poor', 'Neutral', 'Good', 'Awesome']):
+    # Menyiapkan tensor input untuk model
     input_ids = processed_data['input_ids']
     attention_mask = processed_data['attention_mask']
     
-    # Menyiapkan input untuk model (gunakan tensor)
-    input_data = np.array(input_ids, dtype=np.int32)
-    attention_data = np.array(attention_mask, dtype=np.int32)
-
-    # Tentukan input tensor
+    # Menyiapkan input ke model
     input_details = model.get_input_details()
     output_details = model.get_output_details()
 
-    # Set input data untuk model
-    model.set_tensor(input_details[0]['index'], input_data)
-    model.set_tensor(input_details[1]['index'], attention_data)
-
-    # Menjalankan model
+    model.set_tensor(input_details[0]['index'], input_ids.numpy())
+    model.set_tensor(input_details[1]['index'], attention_mask.numpy())
     model.invoke()
-
-    # Mendapatkan hasil prediksi
+    
+    # Mendapatkan hasil prediksi (output tensor)
     output_data = model.get_tensor(output_details[0]['index'])
     
-    # Mencari kelas dengan probabilitas tertinggi
-    predicted_class = np.argmax(output_data)
+    # Misalnya output model adalah skor untuk setiap kelas
+    predicted_class_index = np.argmax(output_data)  # Ambil indeks dengan skor tertinggi
+    predicted_class = classes[predicted_class_index]  # Pemetaan ke label
+    
+    return predicted_class
 
-    # Mengembalikan hasil prediksi
-    return classes[predicted_class]
-
-# Menangani input dan menjalankan prediksi
-if __name__ == "__main__":
-    # Memuat model dan tokenizer
-    model_path = './models/bert_sentiment_model.tflite'
+# Fungsi utama
+def main():
+    model_path = "./models/bert_sentiment_model.tflite"
+    
+    # Memuat model TensorFlow Lite
     model = load_model(model_path)
     
-    # Memuat tokenizer
+    # Tokenizer BERT
     tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 
-    # Input teks untuk prediksi
-    input_text = sys.argv[1]  # Dapatkan input dari argumen baris perintah
+    input_text = sys.argv[1] if len(sys.argv) > 1 else "I love this product!"  # Ambil input dari command line
+    print(f"Input Text: {input_text}")
+    
+    # Persiapkan data
     processed_data = prepare_data(input_text, tokenizer)
     
-    # Prediksi menggunakan model
+    # Lakukan prediksi
     result = make_prediction(model, processed_data)
     
-    # Menampilkan hasil prediksi
     print(f"Predicted Sentiment: {result}")
+
+if __name__ == "__main__":
+    main()
