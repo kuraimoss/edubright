@@ -27,7 +27,7 @@ const init = async () => {
             }
         });
 
-        // Register routes untuk menangani sentiment dan autentikasi
+        // Register routes
         const routes = require("./Routes");
         server.route(routes);
 
