@@ -1,6 +1,7 @@
 "use strict";
 
 const tf = require('@tensorflow/tfjs-node');  // Menggunakan tfjs-node untuk TensorFlow
+const tfTFLite = require('@tensorflow/tfjs-tflite');  // Untuk memuat model TFLite
 const path = require('path');
 const modelManager = require('./modelManager');  // Mengimpor file modelManager.js
 const Joi = require('joi');  // Untuk validasi request payload
@@ -18,8 +19,8 @@ async function loadModel() {
         // Memuat model dari file lokal
         console.log("Loading model from local storage...");
         
-        // Memuat model menggunakan TensorFlow.js standar (bukan TFLite untuk uji coba ini)
-        model = await tf.node.loadGraphModel(path.join(__dirname, '..', 'models', 'bert_sentiment_model.pb'));
+        // Memuat model .tflite menggunakan tfjs-tflite
+        model = await tfTFLite.loadTFLiteModel(path.join(__dirname, '..', 'models', 'bert_sentiment_model.tflite'));
 
         console.log("Model loaded successfully.");
     } catch (error) {
