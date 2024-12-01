@@ -3,7 +3,7 @@ const Joi = require("joi");
 const tflite = require('@tensorflow/tfjs-tflite');  // Menggunakan TensorFlow Lite
 const tf = require('@tensorflow/tfjs-node');      // Menggunakan TensorFlow Node.js
 const fetch = require('node-fetch');              // Untuk mengunduh file model
-
+global.self = global;
 let model;  // Variabel untuk model yang dimuat
 let tokenizer;  // Tokenizer perlu disesuaikan sesuai model Anda (misalnya, BERT Tokenizer)
 
