@@ -2,34 +2,34 @@ const { spawn } = require('child_process');
 const path = require('path');
 
 // Fungsi untuk menjalankan skrip Python dan mendapatkan prediksi
+
 const runPrediction = (inputText, callback) => {
     const pythonPath = path.join(__dirname, '..','python', 'predict.py');
     const pythonProcess = spawn('python3', [pythonPath, inputText]);
 
-    let result = '';
-    
+    // Menangani data yang diterima dari stdout (output dari Python)
+    let output = '';
     pythonProcess.stdout.on('data', (data) => {
-        result += data.toString();
+        output += data.toString();
     });
 
+    // Menangani error jika ada
     pythonProcess.stderr.on('data', (data) => {
         console.error(`stderr: ${data}`);
     });
 
+    // Menangani proses selesai
     pythonProcess.on('close', (code) => {
         if (code === 0) {
-            // Pastikan output Python adalah JSON yang valid
             try {
-                const parsedResult = JSON.parse(result); // Parse JSON dari output
-                console.log('Predicted Sentiment:', parsedResult.sentiment);
-                callback(null, parsedResult.sentiment); // Kirim hasil ke callback
+                // Parsing hasil JSON yang diterima
+                const parsedResult = JSON.parse(output);
+                callback(null, parsedResult);  // Mengirimkan hasil JSON ke callback
             } catch (error) {
-                console.error('Error parsing Python output:', error);
-                callback(error, null);
+                callback('Error parsing Python output: ' + error.message, null);
             }
         } else {
-            console.error(`Python script exited with code ${code}`);
-            callback(new Error(`Python script failed with exit code ${code}`), null);
+            callback(`Python process exited with code ${code}`, null);
         }
     });
 };
@@ -43,7 +43,7 @@ const pythonRoutes = [
                 const inputText = request.payload.text; // Mengambil data text dari request body
 
                 // Menjalankan skrip Python untuk mendapatkan prediksi
-                await new Promise((resolve, reject) => {
+                const result = await new Promise((resolve, reject) => {
                     runPrediction(inputText, (error, result) => {
                         if (error) {
                             reject(error);
@@ -53,16 +53,18 @@ const pythonRoutes = [
                     });
                 });
 
+                // Mengirimkan response dengan hasil prediksi
                 return h.response({
                     success: true,
-                    prediction: parsedResult.sentiment // Hasil prediksi dari Python
+                    prediction: result.sentiment, // Mengambil hasil prediksi dari JSON
                 }).code(200);
             } catch (error) {
-                console.error(error);
-                return h.response({ success: false, message: error.message }).code(500);
+                return h.response({
+                    success: false,
+                    message: error.message || 'An error occurred while processing the prediction',
+                }).code(500);
             }
         }
     }
 ];
-
 module.exports = pythonRoutes;
