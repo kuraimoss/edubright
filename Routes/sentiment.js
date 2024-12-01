@@ -1,5 +1,7 @@
 "use strict";
-
+if (typeof self === 'undefined') {
+    global.self = global;  // Memperbaiki error self not defined di Node.js
+}
 const tf = require('@tensorflow/tfjs-node');  // Menggunakan tfjs-node untuk TensorFlow
 const tfTFLite = require('@tensorflow/tfjs-tflite');  // Untuk memuat model TFLite
 const path = require('path');
