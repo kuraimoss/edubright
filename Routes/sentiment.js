@@ -3,46 +3,28 @@ const Joi = require("joi");
 const tflite = require('@tensorflow/tfjs-tflite');  // Menggunakan TensorFlow Lite
 const tf = require('@tensorflow/tfjs-node');      // Menggunakan TensorFlow Node.js
 const fetch = require('node-fetch');              // Untuk mengunduh file model
-const fs = require('fs');                         // Untuk memeriksa keberadaan file lokal
 
 let model;  // Variabel untuk model yang dimuat
+let tokenizer;  // Anda perlu menyediakan tokenizer yang sesuai (misalnya, BERT Tokenizer)
 
-
-// Fungsi untuk memuat model dari URL atau lokal
+// Fungsi untuk memuat model dan tokenizer dari URL
 async function loadModel() {
-    const modelPath = './models/bert_sentiment_model.tflite';  // Path lokal untuk model
-    const modelUrl = 'https://storage.googleapis.com/edubright-assets/models/bert_sentiment_model.tflite';  // URL model
-  
-    // Cek apakah model sudah ada secara lokal
-    if (fs.existsSync(modelPath)) {
-      console.log("Model ditemukan secara lokal, memuat model...");
-      model = await tflite.loadTFLiteModel(modelPath);  // Muat model dari file lokal
-    } else {
-      console.log("Model tidak ditemukan secara lokal, mengunduh model...");
-      
-      // Mengunduh model dari URL
-      const response = await fetch(modelUrl);
-      if (!response.ok) {
-        throw new Error('Gagal mengunduh model');
-      }
-      const buffer = await response.buffer();
-      fs.writeFileSync(modelPath, buffer);  // Simpan model yang diunduh secara lokal
-      
-      // Muat model setelah diunduh
-      model = await tflite.loadTFLiteModel(modelPath);
+    try {
+        const modelUrl = 'https://storage.googleapis.com/edubright-assets/models/bert_sentiment_model.tflite';
+
+        // Mengunduh model menggunakan fetch
+        const res = await fetch(modelUrl);
+        const buffer = await res.buffer();  // Mengambil buffer dari response
+
+        // Memuat model menggunakan TensorFlow Lite
+        model = await tflite.loadTFLiteModel(buffer);
+        console.log("Model successfully loaded.");
+    } catch (error) {
+        console.error("Error loading the model:", error);
+        throw error;  // Jika gagal, lempar error
     }
-  
-    console.log("Model berhasil dimuat.");
-  }
-  
-  // Panggil fungsi loadModel agar model dapat dimuat
-  loadModel()
-    .then(() => {
-      console.log("Model siap digunakan.");
-    })
-    .catch(err => {
-      console.error("Gagal memuat model:", err);
-    });
+}
+
 // Fungsi untuk memproses input dan melakukan prediksi sentimen
 async function prepareData(inputText) {
     // Tokenizer harus disesuaikan untuk BERT atau model yang Anda gunakan
@@ -75,51 +57,56 @@ async function makePrediction(processedData) {
     return classes[sentimentIndex];
 }
 
-// Menambahkan route untuk sentiment analysis
-module.exports = [
-    {
-        method: "POST",
-        path: "/predict-sentiment",
-        options: {
-            validate: {
-                payload: Joi.object({
-                    text: Joi.string().min(1).required(), // Validasi input teks
-                }),
+// Mengekspor fungsi dan route
+module.exports = {
+    loadModel,  // Mengekspor fungsi loadModel
+    prepareData, // Mengekspor fungsi prepareData
+    makePrediction, // Mengekspor fungsi makePrediction
+    routes: [ // Mengekspor routes yang didefinisikan
+        {
+            method: "POST",
+            path: "/predict-sentiment",
+            options: {
+                validate: {
+                    payload: Joi.object({
+                        text: Joi.string().min(1).required(), // Validasi input teks
+                    }),
+                },
+            },
+            handler: async (request, h) => {
+                const { text } = request.payload;
+
+                if (!text) {
+                    return h.response({ error: "Text is required" }).code(400);
+                }
+
+                try {
+                    // Preprocess input
+                    const processedData = await prepareData(text);
+
+                    // Prediksi sentimen berdasarkan teks yang diterima
+                    const sentimentResult = await makePrediction(processedData);
+
+                    // Mengembalikan hasil analisis sentimen
+                    return h.response({
+                        status: "success",
+                        sentiment: sentimentResult,
+                        text: text,
+                    }).code(200);
+                } catch (error) {
+                    console.error("Error processing sentiment:", error);
+                    return h.response({ error: "Internal Server Error" }).code(500);
+                }
             },
         },
-        handler: async (request, h) => {
-            const { text } = request.payload;
 
-            if (!text) {
-                return h.response({ error: "Text is required" }).code(400);
-            }
-
-            try {
-                // Preprocess input
-                const processedData = await prepareData(text);
-
-                // Prediksi sentimen berdasarkan teks yang diterima
-                const sentimentResult = await makePrediction(processedData);
-
-                // Mengembalikan hasil analisis sentimen
-                return h.response({
-                    status: "success",
-                    sentiment: sentimentResult,
-                    text: text,
-                }).code(200);
-            } catch (error) {
-                console.error("Error processing sentiment:", error);
-                return h.response({ error: "Internal Server Error" }).code(500);
-            }
+        {
+            method: "GET",
+            path: "/predict-sentiment",
+            handler: (request, h) => {
+                // Jika ada request GET ke /predict-sentiment, kembalikan akses ditolak
+                return h.file('Documentation/denied.html').code(403);
+            },
         },
-    },
-
-    {
-        method: "GET",
-        path: "/predict-sentiment",
-        handler: (request, h) => {
-            // Jika ada request GET ke /predict-sentiment, kembalikan akses ditolak
-            return h.file('Documentation/denied.html').code(403);
-        },
-    },
-];
+    ]
+};

@@ -3,12 +3,12 @@
 require('dotenv').config();
 const Hapi = require("@hapi/hapi");
 const Path = require("path");
-const sentiment = require('./Routes/sentiment'); // Pastikan ini merujuk ke file sentiment.js yang benar
+const sentiment = require('./Routes/sentiment'); // Pastikan kita mengimpor dengan benar
 
 const init = async () => {
     try {
         // Memuat model dan tokenizer sebelum memulai server
-        await sentiment.loadModel();
+        await sentiment.loadModel();  // Pastikan loadModel ada di sini
         console.log("Model successfully loaded.");
 
         const server = Hapi.server({
@@ -28,8 +28,7 @@ const init = async () => {
         });
 
         // Register routes
-        const routes = require("./Routes");
-        server.route(routes);
+        server.route(sentiment.routes);  // Pastikan menggunakan routes yang diekspor
 
         // Start server
         await server.start();
@@ -40,7 +39,6 @@ const init = async () => {
     }
 };
 
-// Handle unhandled rejection (errors)
 process.on("unhandledRejection", (err) => {
     console.log(err);
     process.exit(1);
