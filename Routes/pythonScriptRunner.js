@@ -55,7 +55,7 @@ const pythonRoutes = [
 
                 return h.response({
                     success: true,
-                    prediction: result // Hasil prediksi dari Python
+                    prediction: parsedResult.sentiment // Hasil prediksi dari Python
                 }).code(200);
             } catch (error) {
                 console.error(error);
