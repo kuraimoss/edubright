@@ -5,7 +5,7 @@ const tf = require('@tensorflow/tfjs-node');      // Menggunakan TensorFlow Node
 const fetch = require('node-fetch');              // Untuk mengunduh file model
 
 let model;  // Variabel untuk model yang dimuat
-let tokenizer;  // Anda perlu menyediakan tokenizer yang sesuai (misalnya, BERT Tokenizer)
+let tokenizer;  // Tokenizer perlu disesuaikan sesuai model Anda (misalnya, BERT Tokenizer)
 
 // Fungsi untuk memuat model dan tokenizer dari URL
 async function loadModel() {
@@ -43,6 +43,7 @@ async function prepareData(inputText) {
     };
 }
 
+// Fungsi untuk membuat prediksi menggunakan model yang dimuat
 async function makePrediction(processedData) {
     if (!model) {
         throw new Error("Model not loaded. Please load the model first.");
@@ -57,51 +58,54 @@ async function makePrediction(processedData) {
     return classes[sentimentIndex];
 }
 
-// Menambahkan route untuk sentiment analysis
-module.exports = [
-    {
-        method: "POST",
-        path: "/predict-sentiment",
-        options: {
-            validate: {
-                payload: Joi.object({
-                    text: Joi.string().min(1).required(), // Validasi input teks
-                }),
+// Mengekspor fungsi-fungsi ini
+module.exports = {
+    loadModel,  // Mengekspor loadModel untuk digunakan di server.js
+    predictSentiment: [
+        {
+            method: "POST",
+            path: "/predict-sentiment",
+            options: {
+                validate: {
+                    payload: Joi.object({
+                        text: Joi.string().min(1).required(), // Validasi input teks
+                    }),
+                },
+            },
+            handler: async (request, h) => {
+                const { text } = request.payload;
+
+                if (!text) {
+                    return h.response({ error: "Text is required" }).code(400);
+                }
+
+                try {
+                    // Preprocess input
+                    const processedData = await prepareData(text);
+
+                    // Prediksi sentimen berdasarkan teks yang diterima
+                    const sentimentResult = await makePrediction(processedData);
+
+                    // Mengembalikan hasil analisis sentimen
+                    return h.response({
+                        status: "success",
+                        sentiment: sentimentResult,
+                        text: text,
+                    }).code(200);
+                } catch (error) {
+                    console.error("Error processing sentiment:", error);
+                    return h.response({ error: "Internal Server Error" }).code(500);
+                }
             },
         },
-        handler: async (request, h) => {
-            const { text } = request.payload;
 
-            if (!text) {
-                return h.response({ error: "Text is required" }).code(400);
-            }
-
-            try {
-                // Preprocess input
-                const processedData = await prepareData(text);
-
-                // Prediksi sentimen berdasarkan teks yang diterima
-                const sentimentResult = await makePrediction(processedData);
-
-                // Mengembalikan hasil analisis sentimen
-                return h.response({
-                    status: "success",
-                    sentiment: sentimentResult,
-                    text: text,
-                }).code(200);
-            } catch (error) {
-                console.error("Error processing sentiment:", error);
-                return h.response({ error: "Internal Server Error" }).code(500);
-            }
+        {
+            method: "GET",
+            path: "/predict-sentiment",
+            handler: (request, h) => {
+                // Jika ada request GET ke /predict-sentiment, kembalikan akses ditolak
+                return h.file('Documentation/denied.html').code(403);
+            },
         },
-    },
-
-    {
-        method: "GET",
-        path: "/predict-sentiment",
-        handler: (request, h) => {
-            // Jika ada request GET ke /predict-sentiment, kembalikan akses ditolak
-            return h.file('Documentation/denied.html').code(403);
-        },
-    },
-];
+    ]
+};
