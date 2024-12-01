@@ -5,7 +5,7 @@ const path = require('path');
 // Fungsi untuk menjalankan skrip Python dan mendapatkan prediksi
 const runPrediction = (inputText, callback) => {
     // Tentukan path ke skrip Python
-    const pythonPath = path.join(__dirname, '..', 'models', 'python', 'predict.py');
+    const pythonPath = path.join(__dirname, '..', 'python', 'predict.py');
     
     // Jalankan skrip Python dengan menggunakan python3 (tergantung pada sistem Anda)
     const pythonProcess = spawn('python3', [pythonPath, inputText]);
