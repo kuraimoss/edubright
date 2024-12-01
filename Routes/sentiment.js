@@ -1,10 +1,9 @@
 "use strict";
 
-const tf = require('@tensorflow/tfjs-node'); // Pastikan ini digunakan untuk node.js
-const tfTFLite = require('@tensorflow/tfjs-tflite'); // Mengimpor TFLite untuk tfjs-node
+const tf = require('@tensorflow/tfjs-node');  // Menggunakan tfjs-node untuk TensorFlow
 const path = require('path');
-const modelManager = require('./modelManager'); // Mengimpor file modelManager.js
-const Joi = require('joi'); // Untuk validasi request payload
+const modelManager = require('./modelManager');  // Mengimpor file modelManager.js
+const Joi = require('joi');  // Untuk validasi request payload
 
 let model = null;
 
@@ -19,8 +18,8 @@ async function loadModel() {
         // Memuat model dari file lokal
         console.log("Loading model from local storage...");
         
-        // Memuat model TFLite menggunakan tfjs-tflite
-        model = await tfTFLite.node.loadTFLiteModel(path.join(__dirname, '..', 'models', 'bert_sentiment_model.tflite'));
+        // Memuat model menggunakan TensorFlow.js standar (bukan TFLite untuk uji coba ini)
+        model = await tf.node.loadGraphModel(path.join(__dirname, '..', 'models', 'bert_sentiment_model.pb'));
 
         console.log("Model loaded successfully.");
     } catch (error) {
@@ -38,14 +37,13 @@ async function predictSentiment(text) {
     }
 
     // Mengubah teks menjadi tensor, Anda mungkin perlu menyesuaikan ini dengan cara model Anda membutuhkan input
-    // Sebagai contoh, ini hanya placeholder dan harus disesuaikan dengan input model TFLite Anda
+    // Sebagai contoh, ini hanya placeholder dan harus disesuaikan dengan input model Anda
     const inputTensor = tf.tensor([text]);  // Misalnya, sesuaikan dengan format input model Anda
 
     // Prediksi menggunakan model
     const predictions = model.predict(inputTensor);
 
     // Mengambil hasil prediksi
-    // Sesuaikan dengan output model, misalnya mendapatkan nilai probabilitas atau kelas
     const output = predictions.arraySync();
     return output; // Anda bisa memodifikasi ini untuk mengembalikan nilai yang sesuai
 }
