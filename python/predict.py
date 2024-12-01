@@ -28,7 +28,7 @@ def main():
     input_text = sys.argv[1]
     
     # Load model dan tokenizer
-    model_path = 'models/python/bert_sentiment_model.tflite'
+    model_path = 'models/bert_sentiment_model.tflite'
     model = tf.saved_model.load(model_path)  # Muat model TensorFlow
     tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 
