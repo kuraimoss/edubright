@@ -3,14 +3,10 @@
 require('dotenv').config();
 const Hapi = require("@hapi/hapi");
 const Path = require("path");
-const sentiment = require('./Routes/sentiment'); // Mengimpor routing dan logika sentiment
+const routes = require('./Routes');  // Mengimpor routing dari index.js
 
 const init = async () => {
     try {
-        // Memuat model dan tokenizer sebelum memulai server
-        await sentiment.loadModel();  // Pastikan loadModel ada di sini
-        console.log("Model successfully loaded.");
-
         const server = Hapi.server({
             port: process.env.PORT || 80,  // Pastikan port 80 digunakan
             host: "0.0.0.0"
@@ -28,8 +24,7 @@ const init = async () => {
             }
         });
 
-        // Menggunakan routes dari sentiment.js
-        server.route(sentiment.routes);  // Pastikan menggunakan routes yang diekspor
+        server.route(routes);
 
         // Start server
         await server.start();
