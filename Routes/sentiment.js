@@ -7,34 +7,42 @@ const fs = require('fs');                         // Untuk memeriksa keberadaan 
 
 let model;  // Variabel untuk model yang dimuat
 
+
 // Fungsi untuk memuat model dari URL atau lokal
 async function loadModel() {
-    try {
-        const modelPath = './models/bert_sentiment_model.tflite';  // Path ke model lokal
-
-        // Memastikan file model ada
-        if (!fs.existsSync(modelPath)) {
-            console.log('Model file not found locally. Downloading from Google Cloud...');
-            const modelUrl = 'https://storage.googleapis.com/edubright-assets/models/bert_sentiment_model.tflite';
-            
-            // Mengunduh model dari URL
-            const res = await fetch(modelUrl);
-            const buffer = await res.buffer();
-            fs.writeFileSync(modelPath, buffer); // Menyimpan model ke lokal
-
-            console.log('Model downloaded and saved locally.');
-        }
-
-        // Memuat model dari file lokal
-        const buffer = fs.readFileSync(modelPath);  // Membaca file model
-        model = await tflite.loadTFLiteModel(buffer); // Memuat model menggunakan TensorFlow Lite
-        console.log("Model successfully loaded.");
-    } catch (error) {
-        console.error("Error loading the model:", error);
-        throw error;  // Jika gagal, lempar error
+    const modelPath = './models/bert_sentiment_model.tflite';  // Path lokal untuk model
+    const modelUrl = 'https://storage.googleapis.com/edubright-assets/models/bert_sentiment_model.tflite';  // URL model
+  
+    // Cek apakah model sudah ada secara lokal
+    if (fs.existsSync(modelPath)) {
+      console.log("Model ditemukan secara lokal, memuat model...");
+      model = await tflite.loadTFLiteModel(modelPath);  // Muat model dari file lokal
+    } else {
+      console.log("Model tidak ditemukan secara lokal, mengunduh model...");
+      
+      // Mengunduh model dari URL
+      const response = await fetch(modelUrl);
+      if (!response.ok) {
+        throw new Error('Gagal mengunduh model');
+      }
+      const buffer = await response.buffer();
+      fs.writeFileSync(modelPath, buffer);  // Simpan model yang diunduh secara lokal
+      
+      // Muat model setelah diunduh
+      model = await tflite.loadTFLiteModel(modelPath);
     }
-}
-
+  
+    console.log("Model berhasil dimuat.");
+  }
+  
+  // Panggil fungsi loadModel agar model dapat dimuat
+  loadModel()
+    .then(() => {
+      console.log("Model siap digunakan.");
+    })
+    .catch(err => {
+      console.error("Gagal memuat model:", err);
+    });
 // Fungsi untuk memproses input dan melakukan prediksi sentimen
 async function prepareData(inputText) {
     // Tokenizer harus disesuaikan untuk BERT atau model yang Anda gunakan
