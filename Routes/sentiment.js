@@ -1,34 +1,33 @@
 "use strict";
 
-const tf = require("@tensorflow/tfjs-node"); // Menggunakan tfjs-node untuk bekerja dengan model TFLite
-const fetch = require("node-fetch");
-const Joi = require("joi"); // Import Joi untuk validasi
-const path = require("path");
+const tf = require('@tensorflow/tfjs-node'); // Untuk bekerja dengan TensorFlow Lite
+const fetch = require('node-fetch');
+const Joi = require('joi');
+const path = require('path');
 const fs = require('fs');
 
-// Variabel untuk menyimpan model setelah dimuat
 let model = null;
 
-// Fungsi untuk memuat model
 async function loadModel() {
     try {
         console.log("Downloading model from Google Cloud Storage...");
 
-        const modelPath = 'https://storage.googleapis.com/edubright-assets/models/bert_sentiment_model.tflite'; // URL model TFLite
+        // URL untuk model TFLite
+        const modelPath = 'https://storage.googleapis.com/edubright-assets/models/bert_sentiment_model.tflite';
         const response = await fetch(modelPath);
         
         if (!response.ok) {
             throw new Error(`Failed to fetch model: ${response.statusText}`);
         }
 
-        // Simpan model TFLite ke dalam direktori lokal
+        // Menyimpan model ke file lokal
         const buffer = await response.buffer();
         const localModelPath = path.join(__dirname, '..', 'models', 'bert_sentiment_model.tflite');
         fs.writeFileSync(localModelPath, buffer);
         console.log("Model successfully downloaded and saved locally.");
 
-        // Memuat model dari file lokal
-        model = await tf.node.loadTFLiteModel(localModelPath);
+        // Memuat model TensorFlow Lite
+        model = await tf.loadGraphModel(`file://${localModelPath}`);
         console.log("Model loaded successfully.");
     } catch (error) {
         console.error("Error loading the model:", error);
@@ -36,23 +35,21 @@ async function loadModel() {
     }
 }
 
-// Fungsi untuk membuat prediksi sentimen
 async function predictSentiment(text) {
     if (!model) {
         throw new Error("Model is not loaded");
     }
 
-    // Preprocessing teks jika diperlukan (misalnya, tokenisasi)
+    // Preprocessing text
     const tensor = tf.tensor([text]);
 
-    // Prediksi menggunakan model
+    // Melakukan prediksi dengan model
     const output = model.predict(tensor);
-    const prediction = output.dataSync();  // Ambil hasil prediksi
+    const prediction = output.dataSync();  // Mengambil hasil prediksi
 
     return prediction;
 }
 
-// Ekspor routes dan fungsi loadModel
 module.exports = {
     loadModel,
     predictSentiment,
