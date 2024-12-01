@@ -9,25 +9,27 @@ const runPrediction = (inputText, callback) => {
     let output = '';
 
     pythonProcess.stdout.on('data', (data) => {
-        output += data.toString();
+        output += data.toString(); // Mengumpulkan data output dari Python
     });
 
     pythonProcess.stderr.on('data', (data) => {
-        console.error(`stderr: ${data.toString()}`);
+        console.error(`stderr: ${data}`);
     });
 
     pythonProcess.on('close', (code) => {
         if (code !== 0) {
-            console.error(`Python script exited with code ${code}`);
-            return callback(new Error(`Python script exited with code ${code}`));
-        }
-
-        try {
-            const result = JSON.parse(output);
-            callback(null, result);
-        } catch (err) {
-            console.error(`Error parsing Python output: ${err.message}`);
-            callback(err);
+            console.error(`Python process exited with code ${code}`);
+            callback(new Error("Python script failed"));
+        } else {
+            try {
+                // Mengurai output Python yang diharapkan berupa JSON
+                const parsedOutput = JSON.parse(output);
+                const sentiment = parsedOutput.sentiment; // Ambil nilai 'sentiment'
+                callback(null, sentiment); // Mengirimkan hasil ke callback
+            } catch (error) {
+                console.error('Error parsing Python output:', error);
+                callback(new Error("Error parsing Python output"));
+            }
         }
     });
 };
