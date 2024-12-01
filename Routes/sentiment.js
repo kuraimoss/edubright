@@ -1,24 +1,53 @@
 require("dotenv").config();
 const Joi = require("joi");
 const tflite = require('@tensorflow/tfjs-tflite');  // Menggunakan TensorFlow Lite
-const tf = require('@tensorflow/tfjs-node');      // Menggunakan TensorFlow Node.js
+const fs = require('fs');                         // Untuk membaca dan menulis file sistem lokal
 const fetch = require('node-fetch');              // Untuk mengunduh file model
-global.self = global;
+
 let model;  // Variabel untuk model yang dimuat
 let tokenizer;  // Tokenizer perlu disesuaikan sesuai model Anda (misalnya, BERT Tokenizer)
 
-// Fungsi untuk memuat model dan tokenizer dari URL
-async function loadModel() {
+// Fungsi untuk mengunduh model dan menyimpannya ke file lokal
+async function downloadModel() {
     try {
         const modelUrl = 'https://storage.googleapis.com/edubright-assets/models/bert_sentiment_model.tflite';
+        const modelPath = './models/bert_sentiment_model.tflite';  // Lokasi penyimpanan model lokal
+
+        // Cek jika model sudah ada
+        if (fs.existsSync(modelPath)) {
+            console.log("Model already downloaded.");
+            return;
+        }
 
         // Mengunduh model menggunakan fetch
         const res = await fetch(modelUrl);
         const buffer = await res.buffer();  // Mengambil buffer dari response
 
+        // Menyimpan buffer ke file lokal
+        fs.writeFileSync(modelPath, buffer);
+        console.log("Model successfully downloaded and saved to", modelPath);
+    } catch (error) {
+        console.error("Error downloading the model:", error);
+        throw error;
+    }
+}
+
+// Fungsi untuk memuat model dari file lokal
+async function loadModel() {
+    try {
+        const modelPath = './models/bert_sentiment_model.tflite';  // Path ke model lokal
+
+        // Memastikan file model ada
+        if (!fs.existsSync(modelPath)) {
+            throw new Error(`Model file not found at ${modelPath}`);
+        }
+
+        // Membaca model dari file lokal
+        const buffer = fs.readFileSync(modelPath);  // Membaca file sebagai buffer
+
         // Memuat model menggunakan TensorFlow Lite
         model = await tflite.loadTFLiteModel(buffer);
-        console.log("Model successfully loaded.");
+        console.log("Model successfully loaded from local file.");
     } catch (error) {
         console.error("Error loading the model:", error);
         throw error;  // Jika gagal, lempar error
@@ -61,6 +90,7 @@ async function makePrediction(processedData) {
 // Mengekspor fungsi-fungsi ini
 module.exports = {
     loadModel,  // Mengekspor loadModel untuk digunakan di server.js
+    downloadModel,  // Mengekspor downloadModel untuk digunakan di server.js jika diperlukan
     predictSentiment: [
         {
             method: "POST",
