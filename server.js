@@ -3,10 +3,14 @@
 require('dotenv').config();
 const Hapi = require("@hapi/hapi");
 const Path = require("path");
-const routes = require('./Routes');  // Mengimpor routing dari index.js
+const routes = require('./Routes');  // Mengimpor routing dari Routes.js
+const { checkAndDownloadModel } = require('./Utils/modelManager');  // Import fungsi pengecekan model
 
 const init = async () => {
     try {
+        // Periksa dan unduh model sebelum memulai server
+        await checkAndDownloadModel();
+
         const server = Hapi.server({
             port: process.env.PORT || 80,  // Pastikan port 80 digunakan
             host: "0.0.0.0"
@@ -17,27 +21,28 @@ const init = async () => {
 
         // Menambahkan route default untuk menyajikan file statis
         server.route({
-            method: "GET",
-            path: "/",
-            handler: (request, h) => {
-                return h.file(Path.join(__dirname, "Documentation", "index.html"));
+            method: 'GET',
+            path: '/{param*}',
+            handler: {
+                directory: {
+                    path: Path.join(__dirname, 'Documentation', 'index.html'),
+                    listing: true,
+                    index: true
+                }
             }
         });
 
+        // Menambahkan routing lainnya dari Routes/index.js
         server.route(routes);
 
-        // Start server
+        // Memulai server
         await server.start();
-        console.log("HTTP Server running on %s", server.info.uri);
-    } catch (error) {
-        console.error("Error starting the server:", error);
-        process.exit(1);
+        console.log('Server berjalan pada ' + server.info.uri);
+
+    } catch (err) {
+        console.error('Terjadi kesalahan saat memulai server:', err);
     }
 };
 
-process.on("unhandledRejection", (err) => {
-    console.log(err);
-    process.exit(1);
-});
-
+// Memulai server
 init();
