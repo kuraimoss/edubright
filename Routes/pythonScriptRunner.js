@@ -2,7 +2,6 @@ const { spawn } = require('child_process');
 const path = require('path');
 
 // Fungsi untuk menjalankan skrip Python dan mendapatkan prediksi
-// Fungsi untuk menjalankan skrip Python dan mendapatkan prediksi
 const runPrediction = (inputText, callback) => {
     // Tentukan path ke skrip Python
     const pythonPath = path.join(__dirname, '..', 'python', 'predict.py');
