@@ -4,34 +4,30 @@ const path = require('path');
 // Fungsi untuk menjalankan skrip Python dan mendapatkan prediksi
 const runPrediction = (inputText, callback) => {
     const pythonPath = path.join(__dirname, '..', 'python', 'predict.py');
-    const python = spawn('python3', [pythonPath, inputText]);
+    const pythonProcess = spawn('python3', [pythonPath, inputText]);
 
     let output = '';
-    let error = '';
 
-    python.stdout.on('data', (data) => {
+    pythonProcess.stdout.on('data', (data) => {
         output += data.toString();
     });
 
-    python.stderr.on('data', (data) => {
-        error += data.toString();
+    pythonProcess.stderr.on('data', (data) => {
+        console.error(`stderr: ${data.toString()}`);
     });
 
-    python.on('close', (code) => {
+    pythonProcess.on('close', (code) => {
         if (code !== 0) {
             console.error(`Python script exited with code ${code}`);
-            console.error(error);
-            callback(error, null);
-            return;
+            return callback(new Error(`Python script exited with code ${code}`));
         }
 
         try {
-            // Menguraikan output JSON
             const result = JSON.parse(output);
             callback(null, result);
-        } catch (e) {
-            console.error('Error parsing Python output:', e);
-            callback(e, null);
+        } catch (err) {
+            console.error(`Error parsing Python output: ${err.message}`);
+            callback(err);
         }
     });
 };
