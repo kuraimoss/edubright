@@ -40,34 +40,37 @@ const pythonRoutes = [
         path: '/predict',
         handler: async (request, h) => {
             try {
-                const inputText = request.payload.text;  // Mengambil text dari request body
+                const inputText = request.payload.text; // Mengambil data text dari request body
 
                 // Menjalankan skrip Python untuk mendapatkan prediksi
-                const result = await new Promise((resolve, reject) => {
-                    runPrediction(inputText, (error, result) => {
+                let result;
+                await new Promise((resolve, reject) => {
+                    runPrediction(inputText, (error, resultData) => {
                         if (error) {
                             reject(error);
                         } else {
-                            resolve(result);  // Menyimpan hasil prediksi
+                            result = resultData;
+                            resolve(result);
                         }
                     });
                 });
 
-                // Mengembalikan response dengan status yang benar
+                // Menyiapkan response sesuai dengan format yang diharapkan oleh test case
                 return h.response({
-                    status: 'success',  // Menambahkan status
-                    success: true,
-                    prediction: result  // Hasil prediksi
-                }).code(200);  // Kode status 200
+                    status: 'success',
+                    data: {
+                        prediction: result // Hasil prediksi dari Python
+                    }
+                }).code(200); // Pastikan status code 200
             } catch (error) {
-                console.error('Error during prediction:', error);
                 return h.response({
                     status: 'error',
                     message: error.message
-                }).code(500);  // Kode status 500 jika terjadi error
+                }).code(500);
             }
         }
     }
 ];
+
 
 module.exports = pythonRoutes;
