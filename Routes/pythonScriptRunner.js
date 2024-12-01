@@ -2,38 +2,39 @@ const { spawn } = require('child_process');
 const path = require('path');
 
 // Fungsi untuk menjalankan skrip Python dan mendapatkan prediksi
-// Fungsi untuk menjalankan skrip Python dan mendapatkan prediksi
 const runPrediction = (inputText, callback) => {
     const pythonPath = path.join(__dirname, '..', 'python', 'predict.py');
-    const pythonProcess = spawn('python3', [pythonPath, inputText]);
+    const python = spawn('python3', [pythonPath, inputText]);
 
     let output = '';
-    pythonProcess.stdout.on('data', (data) => {
+    let error = '';
+
+    python.stdout.on('data', (data) => {
         output += data.toString();
     });
 
-    pythonProcess.stderr.on('data', (data) => {
-        console.error(`stderr: ${data}`);
+    python.stderr.on('data', (data) => {
+        error += data.toString();
     });
 
-    pythonProcess.on('close', (code) => {
+    python.on('close', (code) => {
         if (code !== 0) {
             console.error(`Python script exited with code ${code}`);
-            callback(new Error('Failed to run prediction'));
+            console.error(error);
+            callback(error, null);
             return;
         }
 
         try {
-            // Misalnya, jika Python mengembalikan JSON, kita perlu mengonversinya
+            // Menguraikan output JSON
             const result = JSON.parse(output);
             callback(null, result);
-        } catch (err) {
-            console.error('Error parsing Python output:', err);
-            callback(new Error('Error parsing Python output'));
+        } catch (e) {
+            console.error('Error parsing Python output:', e);
+            callback(e, null);
         }
     });
 };
-
 // Menambahkan rute POST untuk menangani prediksi
 const pythonRoutes = [
     {
