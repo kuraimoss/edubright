@@ -3,13 +3,13 @@ const path = require('path');
 
 // Fungsi untuk menjalankan skrip Python dan mendapatkan prediksi
 const runPrediction = (inputText, callback) => {
-    const pythonPath = path.join(__dirname, '..', 'python', 'predict.py');
+    const pythonPath = path.join(__dirname, '..','python', 'predict.py');
     const pythonProcess = spawn('python3', [pythonPath, inputText]);
 
-    let output = '';
-
+    let result = '';
+    
     pythonProcess.stdout.on('data', (data) => {
-        output += data.toString(); // Mengumpulkan data output dari Python
+        result += data.toString();
     });
 
     pythonProcess.stderr.on('data', (data) => {
@@ -17,19 +17,19 @@ const runPrediction = (inputText, callback) => {
     });
 
     pythonProcess.on('close', (code) => {
-        if (code !== 0) {
-            console.error(`Python process exited with code ${code}`);
-            callback(new Error("Python script failed"));
-        } else {
+        if (code === 0) {
+            // Pastikan output Python adalah JSON yang valid
             try {
-                // Mengurai output Python yang diharapkan berupa JSON
-                const parsedOutput = JSON.parse(output);
-                const sentiment = parsedOutput.sentiment; // Ambil nilai 'sentiment'
-                callback(null, sentiment); // Mengirimkan hasil ke callback
+                const parsedResult = JSON.parse(result); // Parse JSON dari output
+                console.log('Predicted Sentiment:', parsedResult.sentiment);
+                callback(null, parsedResult.sentiment); // Kirim hasil ke callback
             } catch (error) {
                 console.error('Error parsing Python output:', error);
-                callback(new Error("Error parsing Python output"));
+                callback(error, null);
             }
+        } else {
+            console.error(`Python script exited with code ${code}`);
+            callback(new Error(`Python script failed with exit code ${code}`), null);
         }
     });
 };
