@@ -2,34 +2,35 @@ const { spawn } = require('child_process');
 const path = require('path');
 
 // Fungsi untuk menjalankan skrip Python dan mendapatkan prediksi
+// Fungsi untuk menjalankan skrip Python dan mendapatkan prediksi
 const runPrediction = (inputText, callback) => {
-    // Tentukan path ke skrip Python
     const pythonPath = path.join(__dirname, '..', 'python', 'predict.py');
-    
-    // Jalankan skrip Python dengan menggunakan python3 (tergantung pada sistem Anda)
     const pythonProcess = spawn('python3', [pythonPath, inputText]);
 
     let output = '';
-    let errorOutput = '';
-
-    // Menangani data yang diterima dari stdout (output dari Python)
     pythonProcess.stdout.on('data', (data) => {
         output += data.toString();
     });
 
-    // Menangani error yang diterima dari stderr
     pythonProcess.stderr.on('data', (data) => {
-        errorOutput += data.toString();
+        console.error(`stderr: ${data}`);
     });
 
-    // Menangani proses selesai
     pythonProcess.on('close', (code) => {
         if (code !== 0) {
-            console.error(`Python script exited with code ${code}: ${errorOutput}`);
-            return callback(errorOutput, null);
+            console.error(`Python script exited with code ${code}`);
+            callback(new Error('Failed to run prediction'));
+            return;
         }
-        // Mengirimkan hasil prediksi ke callback
-        callback(null, output);
+
+        try {
+            // Misalnya, jika Python mengembalikan JSON, kita perlu mengonversinya
+            const result = JSON.parse(output);
+            callback(null, result);
+        } catch (err) {
+            console.error('Error parsing Python output:', err);
+            callback(new Error('Error parsing Python output'));
+        }
     });
 };
 
