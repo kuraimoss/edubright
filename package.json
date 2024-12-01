@@ -1,0 +1,28 @@
+{
+  "name": "edubright-api",
+  "version": "1.0.0",
+  "description": "API",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "kura",
+  "license": "ISC",
+  "dependencies": {
+    "@google-cloud/storage": "^7.14.0",
+    "@hapi/hapi": "^21.3.12",
+    "@hapi/inert": "^7.1.0",
+    "@tensorflow/tfjs-node": "^4.22.0",
+    "@tensorflow/tfjs-tflite": "^0.0.1-alpha.10",
+    "bcrypt": "^5.1.1",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "joi": "^17.13.3",
+    "jsonwebtoken": "^9.0.2",
+    "mysql2": "^3.11.4",
+    "tokenizers": "^0.13.3",
+    "tokenizers-linux-x64-gnu": "^0.13.4-rc1",
+    "uuid": "^11.0.3"
+  }
+}
