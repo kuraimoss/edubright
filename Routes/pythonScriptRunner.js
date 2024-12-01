@@ -40,7 +40,7 @@ const pythonRoutes = [
         path: '/predict',
         handler: async (request, h) => {
             try {
-                const inputText = request.payload.text; // Mengambil data text dari request body
+                const inputText = request.payload.text;  // Mengambil text dari request body
 
                 // Menjalankan skrip Python untuk mendapatkan prediksi
                 const result = await new Promise((resolve, reject) => {
@@ -48,23 +48,26 @@ const pythonRoutes = [
                         if (error) {
                             reject(error);
                         } else {
-                            resolve(result);
+                            resolve(result);  // Menyimpan hasil prediksi
                         }
                     });
                 });
 
-                // Mengirimkan response dengan hasil prediksi
+                // Mengembalikan response dengan status yang benar
                 return h.response({
+                    status: 'success',  // Menambahkan status
                     success: true,
-                    prediction: result.sentiment, // Mengambil hasil prediksi dari JSON
-                }).code(200);
+                    prediction: result  // Hasil prediksi
+                }).code(200);  // Kode status 200
             } catch (error) {
+                console.error('Error during prediction:', error);
                 return h.response({
-                    success: false,
-                    message: error.message || 'An error occurred while processing the prediction',
-                }).code(500);
+                    status: 'error',
+                    message: error.message
+                }).code(500);  // Kode status 500 jika terjadi error
             }
         }
     }
 ];
+
 module.exports = pythonRoutes;
