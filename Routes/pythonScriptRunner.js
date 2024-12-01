@@ -2,29 +2,35 @@ const { spawn } = require('child_process');
 const path = require('path');
 
 // Fungsi untuk menjalankan skrip Python dan mendapatkan prediksi
+// Fungsi untuk menjalankan skrip Python dan mendapatkan prediksi
 const runPrediction = (inputText, callback) => {
+    // Tentukan path ke skrip Python
     const pythonPath = path.join(__dirname, '..', 'models', 'python', 'predict.py');
-    const pythonProcess = spawn('python', [pythonPath, inputText]);
+    
+    // Jalankan skrip Python dengan menggunakan python3 (tergantung pada sistem Anda)
+    const pythonProcess = spawn('python3', [pythonPath, inputText]);
+
+    let output = '';
+    let errorOutput = '';
 
     // Menangani data yang diterima dari stdout (output dari Python)
-    let output = '';
     pythonProcess.stdout.on('data', (data) => {
         output += data.toString();
     });
 
-    // Menangani error jika ada
+    // Menangani error yang diterima dari stderr
     pythonProcess.stderr.on('data', (data) => {
-        console.error(`stderr: ${data}`);
+        errorOutput += data.toString();
     });
 
-    // Ketika proses Python selesai
+    // Menangani proses selesai
     pythonProcess.on('close', (code) => {
-        if (code === 0) {
-            // Callback dengan hasil prediksi
-            callback(null, output);
-        } else {
-            callback(new Error('Proses Python gagal'));
+        if (code !== 0) {
+            console.error(`Python script exited with code ${code}: ${errorOutput}`);
+            return callback(errorOutput, null);
         }
+        // Mengirimkan hasil prediksi ke callback
+        callback(null, output);
     });
 };
 
