@@ -1,29 +1,28 @@
 require('dotenv').config();
-const tf = require('@tensorflow/tfjs-node');      // Menggunakan TensorFlow Node.js
-const tflite = require('@tensorflow/tfjs-tflite'); // Menggunakan TensorFlow Lite
-const fetch = require('node-fetch'); // Untuk mengunduh model
-const fs = require('fs'); // Untuk menulis file ke sistem lokal
-const path = require('path'); // Untuk menangani jalur file
+const tf = require('@tensorflow/tfjs-node');
+const tflite = require('@tensorflow/tfjs-tflite');
+const fetch = require('node-fetch');
+const fs = require('fs');
+const path = require('path');
+const Joi = require('joi'); // Pastikan Joi diimpor untuk validasi
 
-let model;  // Variabel untuk model yang dimuat
+let model;
+let tokenizer; // Pastikan Anda menyediakan tokenizer yang sesuai jika menggunakan BERT
 
 // Fungsi untuk mengunduh model dari Google Cloud Storage
 async function downloadModel() {
     const modelUrl = 'https://storage.googleapis.com/edubright-assets/models/bert_sentiment_model.tflite';
     const modelPath = path.join(__dirname, 'models', 'bert_sentiment_model.tflite');
 
-    // Periksa jika model sudah ada, jika sudah, lewati unduhan
     if (fs.existsSync(modelPath)) {
         console.log("Model already downloaded.");
         return;
     }
 
-    // Mengunduh model dan menyimpannya di sistem lokal
     console.log("Downloading model...");
     const response = await fetch(modelUrl);
     const buffer = await response.buffer();
 
-    // Menyimpan file model di folder 'models'
     fs.mkdirSync(path.join(__dirname, 'models'), { recursive: true });
     fs.writeFileSync(modelPath, buffer);
 
@@ -33,51 +32,44 @@ async function downloadModel() {
 // Fungsi untuk memuat model TensorFlow Lite
 async function loadModel() {
     try {
-        // Mengunduh model jika belum ada
         await downloadModel();
-
-        // Memuat model dari file .tflite yang sudah diunduh
         model = await tflite.loadTFLiteModel('file://./models/bert_sentiment_model.tflite');
         console.log("Model successfully loaded.");
     } catch (error) {
         console.error("Error loading the model:", error);
-        throw error;  // Jika gagal, lempar error
+        throw error;
     }
 }
 
 // Fungsi untuk memproses input dan melakukan prediksi sentimen
 async function prepareData(inputText) {
-    // Tokenizer harus disesuaikan untuk BERT atau model yang Anda gunakan
-    const tokenized = tokenizer.encode(inputText, { 
-        maxLength: 256, 
-        truncation: true, 
-        padding: 'max_length', 
+    const tokenized = tokenizer.encode(inputText, {
+        maxLength: 256,
+        truncation: true,
+        padding: 'max_length',
         addSpecialTokens: true,
-        returnTensors: 'tf'  // Pastikan ini mengembalikan tensor yang benar
+        returnTensors: 'tf'
     });
 
-    // Mengembalikan input yang siap untuk dimasukkan ke model
     return {
         input_ids: tf.cast(tokenized.input_ids, 'float64'),
         attention_mask: tf.cast(tokenized.attention_mask, 'float64')
     };
 }
 
+// Fungsi untuk melakukan prediksi sentimen
 async function makePrediction(processedData) {
     if (!model) {
         throw new Error("Model not loaded. Please load the model first.");
     }
 
-    // Prediksi sentimen menggunakan model yang dimuat
     const prediction = await model.predict([processedData.input_ids, processedData.attention_mask]);
-
-    // Menentukan kelas berdasarkan hasil prediksi
     const classes = ['Awful', 'Poor', 'Neutral', 'Good', 'Awesome'];
-    const sentimentIndex = prediction.argMax(-1).dataSync()[0];  // Mendapatkan indeks kelas dengan probabilitas tertinggi
+    const sentimentIndex = prediction.argMax(-1).dataSync()[0];
     return classes[sentimentIndex];
 }
 
-// Menambahkan route untuk sentiment analysis
+// Modul untuk menangani rute API
 module.exports = [
     {
         method: "POST",
@@ -120,7 +112,6 @@ module.exports = [
         method: "GET",
         path: "/predict-sentiment",
         handler: (request, h) => {
-            // Jika ada request GET ke /predict-sentiment, kembalikan akses ditolak
             return h.file('Documentation/denied.html').code(403);
         },
     },
