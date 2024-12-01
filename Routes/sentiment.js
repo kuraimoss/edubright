@@ -1,82 +1,79 @@
-"use strict";
-
-const tflite = require('@tensorflow/tfjs-tflite'); // Gunakan library tfjs-tflite
-global.self = global; // Tambahkan self agar kompatibel dengan Node.js
+require("dotenv").config();
+const Joi = require("joi");
+const tflite = require('@tensorflow/tfjs-tflite');  // Import TensorFlow Lite library
+const fetch = require('node-fetch');  // Import fetch untuk mengunduh file dari URL
 
 let model;
 
-// Fungsi untuk memuat model
+// Fungsi untuk memuat model dari URL
 async function loadModel() {
     try {
-        const modelPath = 'https://storage.googleapis.com/edubright-assets/models/bert_sentiment_model.tflite';
-        model = await tflite.loadTFLiteModel(modelPath);
-        console.log("Model loaded successfully!");
+        const modelUrl = 'https://storage.googleapis.com/edubright-assets/models/bert_sentiment_model.tflite';
+        
+        // Mengunduh model menggunakan fetch
+        const res = await fetch(modelUrl);
+        const buffer = await res.buffer(); // Mengambil buffer dari response
+
+        // Memuat model dari buffer
+        model = await tflite.loadTFLiteModel(buffer);
+        console.log("Model successfully loaded.");
     } catch (error) {
         console.error("Error loading the model:", error);
         throw error;
     }
 }
 
-// Fungsi untuk memproses input teks menjadi tensor
-function prepareData(inputText, tokenizer) {
-    const token = tokenizer.encode(inputText, {
-        truncation: true,
-        padding: "max_length",
-        maxLength: 128,
-    });
-
-    return {
-        input_ids: new Float32Array(token.inputIds),
-        attention_mask: new Float32Array(token.attentionMask),
-    };
-}
-
-// Fungsi untuk memprediksi sentimen
-async function predictSentiment(text, tokenizer) {
+// Fungsi untuk memproses input dan prediksi sentimen
+async function predictSentiment(text) {
     if (!model) {
         throw new Error("Model not loaded. Please load the model first.");
     }
 
-    // Preprocessing input data
-    const { input_ids, attention_mask } = prepareData(text, tokenizer);
-
-    // Predict using the model
-    const predictions = model.predict([input_ids, attention_mask]);
-    const sentiment = postProcess(predictions);
-
+    // Proses input dan prediksi sentimen
+    const sentiment = await model.predict(text); // Ganti dengan prediksi sesuai dengan model yang Anda miliki
     return sentiment;
 }
 
-// Fungsi untuk post-processing prediksi
-function postProcess(predictions, classes = ['Awful', 'Poor', 'Neutral', 'Good', 'Awesome']) {
-    const probs = Array.from(predictions.dataSync());
-    const sentimentIndex = probs.indexOf(Math.max(...probs));
-    return classes[sentimentIndex];
-}
+// Menambahkan route untuk sentiment analysis
+module.exports = [
+  {
+    method: "POST",
+    path: "/predict-sentiment",
+    options: {
+      validate: {
+        payload: Joi.object({
+          text: Joi.string().min(1).required(), // Validasi input text
+        }),
+      },
+    },
+    handler: async (request, h) => {
+      const { text } = request.payload;
 
-// Route handler untuk API
-async function sentimentHandler(request, h) {
-    const { text } = request.payload;
-
-    if (!text) {
+      if (!text) {
         return h.response({ error: "Text is required" }).code(400);
-    }
+      }
 
-    try {
-        const tokenizer = await tflite.loadTokenizer('bert-base-uncased'); // Pastikan tokenizer kompatibel
-        const sentiment = await predictSentiment(text, tokenizer);
+      try {
+        // Prediksi sentimen berdasarkan teks yang diterima
+        const sentimentResult = await predictSentiment(text);
 
         return h.response({
-            text,
-            sentiment,
+          status: "success",
+          sentiment: sentimentResult,
+          text: text,
         }).code(200);
-    } catch (error) {
+      } catch (error) {
         console.error("Error processing sentiment:", error);
         return h.response({ error: "Internal Server Error" }).code(500);
-    }
-}
+      }
+    },
+  },
 
-module.exports = {
-    loadModel,
-    sentimentHandler,
-};
+  {
+    method: "GET",
+    path: "/predict-sentiment",
+    handler: (request, h) => {
+      return h.file('Documentation/denied.html').code(403);
+    },
+  },
+];
