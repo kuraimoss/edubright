@@ -1,33 +1,24 @@
 "use strict";
 
-const tf = require('@tensorflow/tfjs-node'); // Untuk bekerja dengan TensorFlow Lite
-const fetch = require('node-fetch');
-const Joi = require('joi');
+const tf = require('@tensorflow/tfjs-node'); // Import TensorFlow.js untuk Node.js
 const path = require('path');
-const fs = require('fs');
+const modelManager = require('./modelManager'); // Mengimpor file modelManager.js
+const Joi = require('joi'); // Untuk validasi request payload
 
 let model = null;
 
+/**
+ * Fungsi untuk memuat model dari lokal setelah memeriksa dan mendownloadnya.
+ */
 async function loadModel() {
     try {
-        console.log("Downloading model from Google Cloud Storage...");
+        // Memeriksa dan mendownload model jika belum ada di lokal
+        await modelManager.checkAndDownloadModel();
 
-        // URL untuk model TFLite
-        const modelPath = 'https://storage.googleapis.com/edubright-assets/models/bert_sentiment_model.tflite';
-        const response = await fetch(modelPath);
-        
-        if (!response.ok) {
-            throw new Error(`Failed to fetch model: ${response.statusText}`);
-        }
+        // Memuat model dari file lokal
+        console.log("Loading model from local storage...");
+        model = await tf.node.loadTFLiteModel(path.join(__dirname, '..', 'models', 'bert_sentiment_model.tflite'));
 
-        // Menyimpan model ke file lokal
-        const buffer = await response.buffer();
-        const localModelPath = path.join(__dirname, '..', 'models', 'bert_sentiment_model.tflite');
-        fs.writeFileSync(localModelPath, buffer);
-        console.log("Model successfully downloaded and saved locally.");
-
-        // Memuat model TensorFlow Lite
-        model = await tf.loadGraphModel(`file://${localModelPath}`);
         console.log("Model loaded successfully.");
     } catch (error) {
         console.error("Error loading the model:", error);
@@ -35,46 +26,67 @@ async function loadModel() {
     }
 }
 
+/**
+ * Fungsi untuk menjalankan prediksi sentiment menggunakan model
+ */
 async function predictSentiment(text) {
     if (!model) {
         throw new Error("Model is not loaded");
     }
 
-    // Preprocessing text
-    const tensor = tf.tensor([text]);
+    // Mengubah teks menjadi tensor, Anda mungkin perlu menyesuaikan ini dengan cara model Anda membutuhkan input
+    // Sebagai contoh, ini hanya placeholder dan harus disesuaikan dengan input model TFLite Anda
+    const inputTensor = tf.tensor([text]);  // Misalnya, sesuaikan dengan format input model Anda
 
-    // Melakukan prediksi dengan model
-    const output = model.predict(tensor);
-    const prediction = output.dataSync();  // Mengambil hasil prediksi
+    // Prediksi menggunakan model
+    const predictions = model.predict(inputTensor);
 
-    return prediction;
+    // Mengambil hasil prediksi
+    // Sesuaikan dengan output model, misalnya mendapatkan nilai probabilitas atau kelas
+    const output = predictions.arraySync();
+    return output; // Anda bisa memodifikasi ini untuk mengembalikan nilai yang sesuai
 }
+
+/**
+ * Route untuk analisis sentimen
+ */
+const routes = [
+    {
+        method: 'POST',
+        path: '/analyze',
+        handler: async (request, h) => {
+            try {
+                const { text } = request.payload;  // Mendapatkan teks dari payload
+                if (!text) {
+                    return h.response({ error: 'Text is required for sentiment analysis.' }).code(400);
+                }
+
+                // Memanggil fungsi predictSentiment dari sentiment.js untuk analisis
+                const prediction = await predictSentiment(text);
+                
+                return h.response({
+                    sentiment: prediction
+                }).code(200);
+            } catch (error) {
+                console.error('Error during sentiment analysis:', error);
+                return h.response({ error: 'Error during sentiment analysis.' }).code(500);
+            }
+        },
+        options: {
+            validate: {
+                payload: Joi.object({
+                    text: Joi.string().required().min(1).max(1000).messages({
+                        'string.empty': 'Text cannot be empty.',
+                        'any.required': 'Text is required.'
+                    })
+                })
+            }
+        }
+    }
+];
 
 module.exports = {
     loadModel,
     predictSentiment,
-    routes: [
-        {
-            method: "POST",
-            path: "/predict-sentiment",
-            handler: async (request, h) => {
-                const { text } = request.payload;
-
-                try {
-                    const sentimentPrediction = await predictSentiment(text);
-                    return h.response({ sentiment: sentimentPrediction }).code(200);
-                } catch (error) {
-                    console.error("Error during prediction:", error);
-                    return h.response({ error: "Failed to predict sentiment" }).code(500);
-                }
-            },
-            options: {
-                validate: {
-                    payload: Joi.object({
-                        text: Joi.string().required(),
-                    }),
-                },
-            },
-        },
-    ],
+    routes // Ekspor routes untuk digunakan di server.js
 };
