@@ -4,7 +4,6 @@ import numpy as np
 from transformers import BertTokenizer, TFBertMainLayer
 
 def load_model(model_path):
-    # Daftarkan TFBertMainLayer sebagai custom object
     with tf.keras.utils.custom_object_scope({'TFBertMainLayer': TFBertMainLayer}):
         model = tf.keras.models.load_model(model_path)
     return model
@@ -27,11 +26,9 @@ def make_prediction(model, processed_data, classes=['Awful', 'Poor', 'Neutral', 
     input_ids = processed_data['input_ids']
     attention_mask = processed_data['attention_mask']
     
-    # Model prediction
     input_data = [input_ids, attention_mask]
     preds = model.predict(input_data)
     
-    # Ambil kelas dengan probabilitas tertinggi
     prediction = np.argmax(preds, axis=1)[0]
     return classes[prediction]
 
@@ -43,4 +40,4 @@ if __name__ == "__main__":
     model = load_model(model_path)
     processed_data = prepare_data(input_text, tokenizer)
     result = make_prediction(model, processed_data)
-    print(result)  # Menampilkan hasil sebagai string
+    print(result) 
