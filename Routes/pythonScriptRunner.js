@@ -13,11 +13,15 @@ const runPrediction = (inputText, callback) => {
         output += data.toString();
     });
 
-    // Menangani error jika ada
     pythonProcess.stderr.on('data', (data) => {
-        console.error(`stderr: ${data}`);
+        console.error(`stderr: ${data.toString()}`);
     });
+    console.log("Input Text: ", inputText);
 
+    console.log("Output dari Python:", output);
+    const parsedResult = JSON.parse(output);
+    console.log("Parsed Result:", parsedResult);
+    
     // Menangani proses selesai
     pythonProcess.on('close', (code) => {
         if (code === 0) {
