@@ -1,32 +1,26 @@
 const { exec } = require('child_process');
 
+const { exec } = require('child_process');
+
 function runPythonScript(inputText, callback) {
-    // Tentukan perintah untuk menjalankan skrip Python dengan input teks
     const pythonCommand = `python3 python/predict.py "${inputText}"`;
 
-    // Menjalankan skrip Python
     exec(pythonCommand, (error, stdout, stderr) => {
         if (error) {
             console.error(`exec error: ${error}`);
-            const err = new Error('There was an issue executing the Python script.');
-            err.details = error.message;  // Tambahkan detail error untuk referensi
-            callback(err);  // Pastikan melemparkan objek Error
+            console.error(`stderr: ${stderr}`);  // Tambahkan log untuk stderr
+            callback(new Error('There was an issue executing the Python script.'));
             return;
         }
 
         if (stderr) {
-            console.error(`stderr: ${stderr}`);
-            const err = new Error('There was an error in the Python script.');
-            err.details = stderr;  // Menambahkan detail error
-            callback(err);  // Pastikan melemparkan objek Error
+            console.error(`stderr: ${stderr}`);  // Menangani error yang ada di stderr
+            callback(new Error('There was an error in the Python script.'));
             return;
         }
 
         try {
-            // Parse hasil output dari Python (yang sudah dalam format JSON)
             const result = JSON.parse(stdout);
-
-            // Kirim kembali hasil prediksi dalam format yang diinginkan
             callback(null, {
                 status: 'success',
                 prediction: result.sentiment
