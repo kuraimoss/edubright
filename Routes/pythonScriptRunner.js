@@ -1,66 +1,69 @@
-const { exec } = require('child_process');
+const { spawn } = require('child_process');
+const path = require('path');
 
-function runPythonScript(inputText, callback) {
-    const pythonCommand = `python3 python/predict.py "${inputText}"`;
+// Fungsi untuk menjalankan skrip Python dan mendapatkan prediksi
 
-    exec(pythonCommand, (error, stdout, stderr) => {
-        if (error) {
-            console.error(`exec error: ${error}`);
-            console.error(`stderr: ${stderr}`);  // Tambahkan log untuk stderr
-            callback(new Error('There was an issue executing the Python script.'));
-            return;
-        }
+const runPrediction = (inputText, callback) => {
+    const pythonPath = path.join(__dirname, '..','python', 'predict.py');
+    const pythonProcess = spawn('python3', [pythonPath, inputText]);
 
-        if (stderr) {
-            console.error(`stderr: ${stderr}`);  // Menangani error yang ada di stderr
-            callback(new Error('There was an error in the Python script.'));
-            return;
-        }
+    // Menangani data yang diterima dari stdout (output dari Python)
+    let output = '';
+    pythonProcess.stdout.on('data', (data) => {
+        output += data.toString();
+    });
 
-        try {
-            const result = JSON.parse(stdout);
-            callback(null, {
-                status: 'success',
-                prediction: result.sentiment
-            });
-        } catch (err) {
-            console.error('Error parsing JSON:', err);
-            callback(new Error('Failed to parse the JSON response from Python.'));
+    // Menangani error jika ada
+    pythonProcess.stderr.on('data', (data) => {
+        console.error(`stderr: ${data}`);
+    });
+
+    // Menangani proses selesai
+    pythonProcess.on('close', (code) => {
+        if (code === 0) {
+            try {
+                // Parsing hasil JSON yang diterima
+                const parsedResult = JSON.parse(output);
+                callback(null, parsedResult);  // Mengirimkan hasil JSON ke callback
+            } catch (error) {
+                callback('Error parsing Python output: ' + error.message, null);
+            }
+        } else {
+            callback(`Python process exited with code ${code}`, null);
         }
     });
-}
+};
+// Menambahkan rute POST untuk menangani prediksi
+const pythonRoutes = [
+    {
+        method: 'POST',
+        path: '/predict',
+        handler: async (request, h) => {
+            try {
+                const inputText = request.payload.text; // Mengambil data text dari request body
 
-module.exports = [{
-    method: 'POST',
-    path: '/predict',
-    handler: async (request, h) => {
-        const inputText = request.payload.text;  // Ambil teks dari body request
-
-        try {
-            // Menjalankan skrip Python untuk mendapatkan prediksi
-            const result = await new Promise((resolve, reject) => {
-                runPythonScript(inputText, (error, result) => {
-                    if (error) {
-                        // Lemparkan error menggunakan objek Error
-                        reject(new Error(error.message));
-                    } else {
-                        resolve(result);
-                    }
+                // Menjalankan skrip Python untuk mendapatkan prediksi
+                const result = await new Promise((resolve, reject) => {
+                    runPrediction(inputText, (error, result) => {
+                        if (error) {
+                            reject(error);
+                        } else {
+                            resolve(result);
+                        }
+                    });
                 });
-            });
 
-            return h.response({
-                status: 'success',
-                prediction: result.prediction
-            }).code(200);
-        } catch (error) {
-            console.error('Error during prediction:', error);
-
-            // Jika terjadi error, pastikan error yang dilempar adalah objek Error
-            return h.response({
-                status: 'error',
-                message: error.message  // Pastikan kita hanya melemparkan pesan error
-            }).code(500);
+                return h.response({
+                    success: true,
+                    prediction: result.sentiment,
+                }).code(200);
+            } catch (error) {
+                return h.response({
+                    success: false,
+                    message: error.message || 'An error occurred while processing the prediction',
+                }).code(500);
+            }
         }
     }
-}]
+];
+module.exports = pythonRoutes;
