@@ -2,6 +2,7 @@ import sys
 import tensorflow as tf
 import numpy as np
 import json
+import os
 from transformers import BertTokenizer, TFBertMainLayer
 
 def load_model(model_path):
@@ -46,7 +47,8 @@ def make_prediction(model, processed_data, classes=['Awful', 'Poor', 'Neutral', 
         return str(e)  # Kembalikan error sebagai string jika gagal
 
 if __name__ == "__main__":
-    model_path = '../models/bert_sentiment_model.h5'  # Ganti dengan path model yang benar
+    # Ambil jalur absolut ke model, berdasarkan lokasi file predict.py
+    model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../models/bert_sentiment_model.h5') 
     tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
 
     input_text = sys.argv[1]  # Ambil input dari argumen
