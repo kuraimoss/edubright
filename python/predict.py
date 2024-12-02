@@ -1,13 +1,14 @@
-import sys 
+import sys
 import tensorflow as tf
 import numpy as np
 import json
-from transformers import BertTokenizer
+from transformers import BertTokenizer, TFBertMainLayer
 
 def load_model(model_path):
-    interpreter = tf.lite.Interpreter(model_path=model_path)
-    interpreter.allocate_tensors()
-    return interpreter
+    # Daftarkan TFBertMainLayer sebagai custom object
+    with tf.keras.utils.custom_object_scope({'TFBertMainLayer': TFBertMainLayer}):
+        model = tf.keras.models.load_model(model_path)
+    return model
 
 def prepare_data(input_text, tokenizer):
     token = tokenizer.encode_plus(
@@ -23,24 +24,23 @@ def prepare_data(input_text, tokenizer):
         'attention_mask': tf.cast(token.attention_mask, tf.int32)
     }
 
-
 def make_prediction(model, processed_data, classes=['Awful', 'Poor', 'Neutral', 'Good', 'Awesome']):
     input_ids = processed_data['input_ids']
     attention_mask = processed_data['attention_mask']
-    input_details = model.get_input_details()
-    output_details = model.get_output_details()
-    model.set_tensor(input_details[0]['index'], input_ids)
-    model.set_tensor(input_details[1]['index'], attention_mask)
-    model.invoke()
-    output_data = model.get_tensor(output_details[0]['index'])
-    prediction = np.argmax(output_data)
+    
+    # Model prediction
+    input_data = [input_ids, attention_mask]
+    preds = model.predict(input_data)
+    
+    # Ambil kelas dengan probabilitas tertinggi
+    prediction = np.argmax(preds, axis=1)[0]
     return classes[prediction]
 
 if __name__ == "__main__":
-    model_path = './models/bert_sentiment_model.tflite'
-    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+    model_path = './models/bert_sentiment_model.h5' 
+    tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
 
-    input_text = sys.argv[1]
+    input_text = sys.argv[1] 
     model = load_model(model_path)
     processed_data = prepare_data(input_text, tokenizer)
     result = make_prediction(model, processed_data)

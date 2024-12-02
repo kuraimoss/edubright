@@ -3,9 +3,9 @@ const https = require('https');
 const path = require('path');
 
 // URL model yang ingin diunduh
-const modelUrl = 'https://storage.googleapis.com/edubright-assets/models/bert_sentiment_model.tflite';
+const modelUrl = 'https://storage.googleapis.com/edubright-assets/models/bert_sentiment_model.h5';
 const modelDirectory = path.join(__dirname, '..', 'models');
-const modelPath = path.join(modelDirectory, 'bert_sentiment_model.tflite');
+const modelPath = path.join(modelDirectory, 'bert_sentiment_model.h5');
 
 // Fungsi untuk mengunduh model
 const downloadModel = () => {
