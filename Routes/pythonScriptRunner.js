@@ -2,7 +2,6 @@ const { spawn } = require('child_process');
 const path = require('path');
 
 // Fungsi untuk menjalankan skrip Python dan mendapatkan prediksi
-// Fungsi untuk menjalankan skrip Python dan mendapatkan prediksi
 const runPrediction = (inputText, callback) => {
     const pythonPath = path.join(__dirname, '..', 'python', 'predict.py');
     const pythonProcess = spawn('python3', [pythonPath, inputText]);
@@ -26,15 +25,29 @@ const runPrediction = (inputText, callback) => {
     pythonProcess.on('close', (code) => {
         if (code === 0) {
             try {
-                // Parsing hasil output Python yang berupa JSON
-                const parsedResult = JSON.parse(output); // Parsing string menjadi objek JSON
-                
-                // Mengambil hasil prediksi (sentiment) dari JSON
-                const sentiment = parsedResult.sentiment;  // Ambil nilai dari field "sentiment"
-                callback(null, sentiment);  // Kirimkan hasil prediksi ke callback
+                // Logging output untuk memastikan format JSON
+                console.log("Full Python output: ", output); // Log output lengkap
+
+                // Pastikan output adalah JSON yang valid
+                const isValidJSON = (str) => {
+                    try {
+                        JSON.parse(str);
+                        return true;
+                    } catch (e) {
+                        return false;
+                    }
+                };
+
+                if (isValidJSON(output)) {
+                    const parsedResult = JSON.parse(output);
+                    const sentiment = parsedResult.sentiment;
+                    callback(null, sentiment);  // Kirim hasil prediksi
+                } else {
+                    callback('Invalid JSON output from Python', null);
+                }
             } catch (error) {
                 console.error('Error parsing Python output:', error);
-                callback('Error parsing Python output: ' + error.message, null); // Kirim error jika terjadi masalah parsing
+                callback('Error parsing Python output: ' + error.message, null);
             }
         } else {
             // Jika proses Python gagal
@@ -58,37 +71,26 @@ const pythonRoutes = [
                         if (error) {
                             reject(error);  // Jika terjadi error, reject promise
                         } else {
-                            // Menghapus karakter atau log lain yang tidak diinginkan dari hasil Python
-                            let cleanResult = result.trim(); // Hapus spasi atau karakter ekstra lainnya
-
-                            try {
-                                // Memastikan hasil adalah JSON yang valid
-                                const parsedResult = JSON.parse(cleanResult);  // Parsing hasil JSON
-                                resolve(parsedResult.sentiment);  // Mengambil "sentiment" dari JSON
-                            } catch (parseError) {
-                                reject('Error parsing Python output: ' + parseError.message);
-                            }
+                            resolve(result);  // Mengambil hasil prediksi
                         }
                     });
                 });
 
                 // Mengembalikan response dengan status yang benar
                 return h.response({
-                    status: 'success',  // Menambahkan status
+                    status: 'success',
                     success: true,
-                    prediction: sentiment  // Mengambil hasil prediksi dari "sentiment"
+                    prediction: sentiment  // Mengambil hasil prediksi
                 }).code(200);  // Kode status 200 jika berhasil
             } catch (error) {
-                // Jika terjadi error dalam proses prediksi
                 console.error('Error during prediction:', error);
                 return h.response({
-                    status: 'error',  // Status error
+                    status: 'error',
                     message: error.message  // Pesan error
                 }).code(500);  // Kode status 500 jika terjadi error
             }
         }
     }
 ];
-
 
 module.exports = pythonRoutes;
