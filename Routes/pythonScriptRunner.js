@@ -9,16 +9,16 @@ function runPythonScript(inputText, callback) {
         if (error) {
             console.error(`exec error: ${error}`);
             const err = new Error('There was an issue executing the Python script.');
-            err.details = error;  // Menambahkan detail untuk error
-            callback(err);
+            err.details = error.message;  // Tambahkan detail error untuk referensi
+            callback(err);  // Pastikan melemparkan objek Error
             return;
         }
 
         if (stderr) {
             console.error(`stderr: ${stderr}`);
             const err = new Error('There was an error in the Python script.');
-            err.details = stderr;  // Menambahkan detail untuk error
-            callback(err);
+            err.details = stderr;  // Menambahkan detail error
+            callback(err);  // Pastikan melemparkan objek Error
             return;
         }
 
@@ -38,29 +38,37 @@ function runPythonScript(inputText, callback) {
     });
 }
 
-module.exports = [
-  {
-    method: "POST",
-    path: "/predict",  // Definisikan route POST untuk /predict
-    handler: (request, h) => {
+server.route({
+    method: 'POST',
+    path: '/predict',
+    handler: async (request, h) => {
         const inputText = request.payload.text;  // Ambil teks dari body request
 
-        return new Promise((resolve, reject) => {
-            runPythonScript(inputText, (error, result) => {
-                if (error) {
-                    reject({
-                        status: 'error',
-                        message: error.message,
-                        details: error.details || null
-                    });
-                } else {
-                    resolve({
-                        status: result.status,
-                        prediction: result.prediction
-                    });
-                }
+        try {
+            // Menjalankan skrip Python untuk mendapatkan prediksi
+            const result = await new Promise((resolve, reject) => {
+                runPythonScript(inputText, (error, result) => {
+                    if (error) {
+                        // Lemparkan error menggunakan objek Error
+                        reject(new Error(error.message));
+                    } else {
+                        resolve(result);
+                    }
+                });
             });
-        });
+
+            return h.response({
+                status: 'success',
+                prediction: result.prediction
+            }).code(200);
+        } catch (error) {
+            console.error('Error during prediction:', error);
+
+            // Jika terjadi error, pastikan error yang dilempar adalah objek Error
+            return h.response({
+                status: 'error',
+                message: error.message  // Pastikan kita hanya melemparkan pesan error
+            }).code(500);
+        }
     }
-  }
-];
+});
