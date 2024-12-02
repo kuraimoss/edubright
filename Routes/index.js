@@ -1,5 +1,5 @@
 const authRoutes = require('./auth');
-const pythonRoutes = require('./pythonScriptRunner');  // Import route baru untuk menjalankan skrip Python
+const pythonRoutes = require('./pythonScriptRunner');
 
 module.exports = [
     ...authRoutes,

@@ -27,7 +27,15 @@ const runPrediction = (inputText, callback) => {
             
             // Proses untuk hanya mengambil hasil prediksi (mengabaikan progress bar atau status lainnya)
             const result = output.split('\n').filter(line => line.trim() !== '').pop(); // Ambil baris terakhir
-            callback(null, result.trim());  // Mengirimkan hasil prediksi sebagai string
+            const timestamp = new Date().toISOString(); // Menambahkan timestamp untuk referensi
+
+            // Mengirimkan hasil prediksi sebagai string dan menambahkan metadata
+            callback(null, {
+                success: true,
+                prediction: result.trim(),
+                timestamp: timestamp,
+                message: "Prediksi berhasil diproses!"
+            });
         }
     });
 };
@@ -53,15 +61,13 @@ const pythonRoutes = [
                     });
                 });
 
-                return h.response({
-                    success: true,
-                    prediction: result,  // Menggunakan result langsung yang merupakan string
-                }).code(200);
+                return h.response(result).code(200);  // Mengirimkan hasil lengkap termasuk metadata
             } catch (error) {
                 console.error("Error pada handler prediksi:", error);
                 return h.response({
                     success: false,
                     message: error.message || 'An error occurred while processing the prediction',
+                    timestamp: new Date().toISOString()
                 }).code(500);
             }
         }
