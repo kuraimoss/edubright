@@ -1,4 +1,4 @@
-import sys 
+import sys
 import tensorflow as tf
 import numpy as np
 from transformers import BertTokenizer, TFBertMainLayer
@@ -36,13 +36,11 @@ def make_prediction(model, processed_data, classes=['Awful', 'Poor', 'Neutral', 
     return classes[prediction]
 
 if __name__ == "__main__":
-    model_path = './models/bert_sentiment_model.h5'
-    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+    model_path = 'models/bert_sentiment_model.h5' 
+    tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
 
-    input_text = sys.argv[1]
+    input_text = sys.argv[1] 
     model = load_model(model_path)
     processed_data = prepare_data(input_text, tokenizer)
     result = make_prediction(model, processed_data)
-    
-    # Output tanpa mengubah ke format JSON, hanya string biasa
-    print(result)  # Output ke stdout
+    print(result)  # Menampilkan hasil sebagai string
