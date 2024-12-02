@@ -23,10 +23,10 @@ const runPrediction = (inputText, callback) => {
             console.error(`Python process exited with code ${code}`);
             callback(`Python process failed with code ${code}`, null);
         } else {
-            console.log("Output dari Python sebelum parsing:", output); // Debugging output
+            console.log("Output dari Python:", output); // Debugging output
             try {
-                // Parsing hasil JSON yang diterima
-                const parsedResult = JSON.parse(output);
+                // Mengemas output menjadi format JSON
+                const parsedResult = { sentiment: output.trim() };  // Menambahkan hasil prediksi
                 console.log("Parsed Result:", parsedResult); // Debugging parsed result
                 callback(null, parsedResult);  // Mengirimkan hasil JSON ke callback
             } catch (error) {
