@@ -38,7 +38,7 @@ function runPythonScript(inputText, callback) {
     });
 }
 
-server.route({
+module.exports = [{
     method: 'POST',
     path: '/predict',
     handler: async (request, h) => {
@@ -71,4 +71,4 @@ server.route({
             }).code(500);
         }
     }
-});
+}]
