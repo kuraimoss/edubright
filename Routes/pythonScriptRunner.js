@@ -43,31 +43,28 @@ function runPythonScript(inputText, callback) {
     });
 }
 
-    // Rute POST untuk prediksi
-    server.route({
-        method: 'POST',
-        path: '/predict',
-        handler: (request, h) => {
-            const inputText = request.payload.text;  // Ambil teks dari body request
+module.exports = [
+  {
+    method: "POST",
+    path: "/predict",  // Definisikan route POST untuk /predict
+    handler: (request, h) => {
+        const inputText = request.payload.text;  // Ambil teks dari body request
 
-            return new Promise((resolve, reject) => {
-                runPythonScript(inputText, (result) => {
-                    // Jika hasil sukses
-                    if (result.status === 'success') {
-                        resolve({
-                            status: result.status,
-                            prediction: result.prediction
-                        });
-                    } else {
-                        reject({
-                            status: result.status,
-                            message: result.message
-                        });
-                    }
-                });
+        return new Promise((resolve, reject) => {
+            runPythonScript(inputText, (result) => {
+                if (result.status === 'success') {
+                    resolve({
+                        status: result.status,
+                        prediction: result.prediction
+                    });
+                } else {
+                    reject({
+                        status: result.status,
+                        message: result.message
+                    });
+                }
             });
-        }
-    });
-
-
-module.exports = runPythonScript;
+        });
+    }
+  }
+];

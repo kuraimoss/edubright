@@ -3,5 +3,5 @@ const runPythonScript = require('./pythonScriptRunner');  // Import route baru u
 
 module.exports = [
     ...authRoutes,
-    ...runPythonScript  // Menambahkan route untuk prediksi menggunakan Python
+    ...runPythonScript
 ];
