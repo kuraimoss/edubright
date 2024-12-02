@@ -11,21 +11,32 @@ const runPrediction = (inputText) => {
         let output = '';
         let errorOutput = '';
 
+        // Menangkap data output dari python
         pythonProcess.stdout.on('data', (data) => {
             output += data.toString();
             console.log(`Python output: ${data.toString()}`);
         });
 
+        // Menangkap error output dari python
         pythonProcess.stderr.on('data', (data) => {
             errorOutput += data.toString();
             console.error(`stderr: ${data.toString()}`);
         });
 
+        // Proses setelah Python selesai
         pythonProcess.on('close', (code) => {
             if (code === 0) {
                 try {
-                    const parsedResult = JSON.parse(output);
-                    resolve(parsedResult);  // Resolves with the parsed result
+                    // Membersihkan output untuk memastikan itu JSON valid
+                    output = output.trim(); // Menghapus spasi atau karakter tak diinginkan
+
+                    // Pastikan output adalah JSON sebelum parsing
+                    if (output && output[0] === '{' && output[output.length - 1] === '}') {
+                        const parsedResult = JSON.parse(output);
+                        resolve(parsedResult);  // Resolves with the parsed result
+                    } else {
+                        reject('Invalid JSON output from Python');
+                    }
                 } catch (error) {
                     reject('Error parsing Python output: ' + error.message);
                 }
@@ -49,7 +60,7 @@ const pythonRoutes = [
 
                 // Mengembalikan response dengan status yang benar
                 return h.response({
-                    status: 'success',  // Menambahkan status
+                    status: 'success',  // Status success
                     success: true,
                     sentiment: sentiment  // Mengembalikan hasil sentiment saja
                 }).code(200);  // Kode status 200
