@@ -4,21 +4,22 @@ const path = require('path');
 // Fungsi untuk menjalankan skrip Python dan mendapatkan prediksi
 
 const runPrediction = (inputText, callback) => {
-    const pythonPath = path.join(__dirname, '..','python', 'predict.py');
+    const pythonPath = path.join(__dirname, '..', 'python', 'predict.py');
     const pythonProcess = spawn('python3', [pythonPath, inputText]);
 
-    // Menangani data yang diterima dari stdout (output dari Python)
     let output = '';
+    let errorOutput = '';
+
     pythonProcess.stdout.on('data', (data) => {
         output += data.toString();
+        console.log(`Python output: ${data.toString()}`);  // Log output untuk debug
     });
 
-    // Menangani error jika ada
     pythonProcess.stderr.on('data', (data) => {
-        console.error(`stderr: ${data}`);
+        errorOutput += data.toString();
+        console.error(`stderr: ${data.toString()}`);  // Log error output untuk debug
     });
 
-    // Menangani proses selesai
     pythonProcess.on('close', (code) => {
         if (code === 0) {
             try {
@@ -29,10 +30,11 @@ const runPrediction = (inputText, callback) => {
                 callback('Error parsing Python output: ' + error.message, null);
             }
         } else {
-            callback(`Python process exited with code ${code}`, null);
+            callback(`Python process exited with code ${code}: ${errorOutput}`, null);
         }
     });
 };
+
 // Menambahkan rute POST untuk menangani prediksi
 const pythonRoutes = [
     {
