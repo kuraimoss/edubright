@@ -1,7 +1,5 @@
 const { exec } = require('child_process');
 
-const { exec } = require('child_process');
-
 function runPythonScript(inputText, callback) {
     const pythonCommand = `python3 python/predict.py "${inputText}"`;
 
