@@ -22,13 +22,11 @@ const runPrediction = (inputText, callback) => {
     pythonProcess.on('close', (code) => {
         if (code === 0) {
             try {
-                // Mengabaikan semua output yang tidak relevan dan hanya mengambil JSON yang valid
-                const trimmedOutput = output.trim().replace(/[\r\n]+$/, ''); // Menghapus newlines atau karakter lain
-
-                // Pastikan output adalah JSON
-                const parsedResult = JSON.parse(trimmedOutput);
+                // Parsing hasil JSON yang diterima
+                const parsedResult = JSON.parse(output);
                 callback(null, parsedResult);  // Mengirimkan hasil JSON ke callback
             } catch (error) {
+                console.error('Error parsing Python output:', error);
                 callback('Error parsing Python output: ' + error.message, null);
             }
         } else {
@@ -44,8 +42,7 @@ const pythonRoutes = [
         path: '/predict',
         handler: async (request, h) => {
             try {
-                // Mengambil text dari request body
-                const inputText = request.payload.text;  
+                const inputText = request.payload.text;  // Mengambil text dari request body
 
                 // Menjalankan skrip Python untuk mendapatkan prediksi
                 const result = await new Promise((resolve, reject) => {
@@ -62,7 +59,7 @@ const pythonRoutes = [
                 return h.response({
                     status: 'success',  // Menambahkan status
                     success: true,
-                    prediction: result.sentiment  // Mengambil hasil prediksi sentiment
+                    prediction: result.sentiment  // Mengambil hasil prediksi
                 }).code(200);  // Kode status 200
             } catch (error) {
                 console.error('Error during prediction:', error);
