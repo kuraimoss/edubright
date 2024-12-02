@@ -24,8 +24,10 @@ const runPrediction = (inputText, callback) => {
             callback(`Python process failed with code ${code}`, null);
         } else {
             console.log("Output dari Python:", output); // Debugging output
-            // Langsung mengirim hasil output sebagai string
-            callback(null, output.trim());  // Mengirimkan hasil prediksi sebagai string
+            
+            // Proses untuk hanya mengambil hasil prediksi (mengabaikan progress bar atau status lainnya)
+            const result = output.split('\n').filter(line => line.trim() !== '').pop(); // Ambil baris terakhir
+            callback(null, result.trim());  // Mengirimkan hasil prediksi sebagai string
         }
     });
 };
