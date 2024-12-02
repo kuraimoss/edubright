@@ -22,8 +22,11 @@ const runPrediction = (inputText, callback) => {
     pythonProcess.on('close', (code) => {
         if (code === 0) {
             try {
-                // Parsing hasil JSON yang diterima
-                const parsedResult = JSON.parse(output);
+                // Mengabaikan semua output yang tidak relevan dan hanya mengambil JSON yang valid
+                const trimmedOutput = output.trim().replace(/[\r\n]+$/, ''); // Menghapus newlines atau karakter lain
+
+                // Pastikan output adalah JSON
+                const parsedResult = JSON.parse(trimmedOutput);
                 callback(null, parsedResult);  // Mengirimkan hasil JSON ke callback
             } catch (error) {
                 callback('Error parsing Python output: ' + error.message, null);
