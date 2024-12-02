@@ -23,9 +23,9 @@ const runPrediction = (inputText, callback) => {
             console.error(`Python process exited with code ${code}`);
             callback(`Python process failed with code ${code}`, null);
         } else {
+            console.log("Output dari Python sebelum parsing:", output); // Debugging output
             try {
                 // Parsing hasil JSON yang diterima
-                console.log("Output dari Python:", output); // Debugging output Python
                 const parsedResult = JSON.parse(output);
                 console.log("Parsed Result:", parsedResult); // Debugging parsed result
                 callback(null, parsedResult);  // Mengirimkan hasil JSON ke callback
