@@ -46,7 +46,7 @@ def make_prediction(model, processed_data, classes=['Awful', 'Poor', 'Neutral', 
         return str(e)  # Kembalikan error sebagai string jika gagal
 
 if __name__ == "__main__":
-    model_path = './models/bert_sentiment_model.h5'  # Ganti dengan path model yang benar
+    model_path = '../models/bert_sentiment_model.h5'  # Ganti dengan path model yang benar
     tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
 
     input_text = sys.argv[1]  # Ambil input dari argumen
