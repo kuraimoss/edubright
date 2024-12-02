@@ -45,13 +45,13 @@ const pythonRoutes = [
                 const inputText = request.payload.text;  // Mengambil text dari request body
 
                 // Menjalankan skrip Python untuk mendapatkan prediksi
-                const result = await runPrediction(inputText);  // Menunggu hasil dari runPrediction
+                const sentiment = await runPrediction(inputText);  // Mengambil hasil sentiment
 
                 // Mengembalikan response dengan status yang benar
                 return h.response({
                     status: 'success',  // Menambahkan status
                     success: true,
-                    prediction: result  // Hasil prediksi
+                    sentiment: sentiment  // Mengembalikan hasil sentiment saja
                 }).code(200);  // Kode status 200
             } catch (error) {
                 console.error('Error during prediction:', error);
