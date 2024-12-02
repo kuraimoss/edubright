@@ -25,8 +25,10 @@ const runPrediction = (inputText, callback) => {
     pythonProcess.on('close', (code) => {
         if (code === 0) {
             try {
-                // Logging output untuk memastikan format JSON
-                console.log("Full Python output: ", output); // Log output lengkap
+                // Pastikan output bersih dari karakter tak terlihat
+                output = output.trim();  // Hapus whitespace ekstra
+
+                console.log("Full Python output:", output);  // Log untuk debugging
 
                 // Pastikan output adalah JSON yang valid
                 const isValidJSON = (str) => {
