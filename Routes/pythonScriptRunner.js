@@ -24,15 +24,8 @@ const runPrediction = (inputText, callback) => {
             callback(`Python process failed with code ${code}`, null);
         } else {
             console.log("Output dari Python:", output); // Debugging output
-            try {
-                // Mengemas output menjadi format JSON
-                const parsedResult = { sentiment: output.trim() };  // Menambahkan hasil prediksi
-                console.log("Parsed Result:", parsedResult); // Debugging parsed result
-                callback(null, parsedResult);  // Mengirimkan hasil JSON ke callback
-            } catch (error) {
-                console.error('Error parsing Python output:', error);
-                callback('Error parsing Python output: ' + error.message, null);
-            }
+            // Langsung mengirim hasil output sebagai string
+            callback(null, output.trim());  // Mengirimkan hasil prediksi sebagai string
         }
     });
 };
@@ -60,7 +53,7 @@ const pythonRoutes = [
 
                 return h.response({
                     success: true,
-                    prediction: result.sentiment,
+                    prediction: result,  // Menggunakan result langsung yang merupakan string
                 }).code(200);
             } catch (error) {
                 console.error("Error pada handler prediksi:", error);
