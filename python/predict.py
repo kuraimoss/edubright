@@ -1,17 +1,14 @@
-import sys 
+import sys
 import tensorflow as tf
 import numpy as np
 import json
 from transformers import BertTokenizer, TFBertMainLayer
-
 
 def load_model(model_path):
     # Daftarkan TFBertMainLayer sebagai custom object
     with tf.keras.utils.custom_object_scope({'TFBertMainLayer': TFBertMainLayer}):
         model = tf.keras.models.load_model(model_path)
     return model
-
-
 
 def prepare_data(input_text, tokenizer):
     token = tokenizer.encode_plus(
@@ -40,10 +37,10 @@ def make_prediction(model, processed_data, classes=['Awful', 'Poor', 'Neutral', 
     return classes[prediction]
 
 if __name__ == "__main__":
-    model_path = './models/bert_sentiment_model.h5'
-    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+    model_path = './models/bert_sentiment_model.h5' 
+    tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
 
-    input_text = sys.argv[1]
+    input_text = sys.argv[1] 
     model = load_model(model_path)
     processed_data = prepare_data(input_text, tokenizer)
     result = make_prediction(model, processed_data)
