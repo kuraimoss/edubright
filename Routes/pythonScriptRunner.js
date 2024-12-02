@@ -33,9 +33,9 @@ const runPrediction = (inputText) => {
 
                     // Pastikan output adalah JSON yang valid
                     const parsedResult = JSON.parse(output);
-                    const sentiment = parsedResult.prediction;  // Ambil hasil prediksi
+                    const sentiment = parsedResult.sentiment;  // Mengambil nilai 'sentiment'
 
-                    resolve(sentiment);  // Resolve dengan hasil prediksi
+                    resolve(sentiment);  // Resolve dengan hasil prediksi (sentiment)
                 } catch (error) {
                     console.error('Error parsing Python output:', error);
                     reject('Error parsing Python output: ' + error.message);
@@ -71,7 +71,7 @@ const pythonRoutes = [
                 return h.response({
                     status: 'success',
                     success: true,
-                    prediction: sentiment  // Mengambil hasil prediksi
+                    sentiment: sentiment  // Mengambil hasil prediksi (sentiment)
                 }).code(200);  // Kode status 200 jika berhasil
             } catch (error) {
                 console.error('Error during prediction:', error);
