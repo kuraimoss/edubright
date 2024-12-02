@@ -2,6 +2,7 @@ const { spawn } = require('child_process');
 const path = require('path');
 
 // Fungsi untuk menjalankan skrip Python dan mendapatkan prediksi
+
 const runPrediction = (inputText, callback) => {
     const pythonPath = path.join(__dirname, '..', 'python', 'predict.py');
     const pythonProcess = spawn('python3', [pythonPath, inputText]);
@@ -26,7 +27,6 @@ const runPrediction = (inputText, callback) => {
                 const parsedResult = JSON.parse(output);
                 callback(null, parsedResult);  // Mengirimkan hasil JSON ke callback
             } catch (error) {
-                console.error('Error parsing Python output:', error);
                 callback('Error parsing Python output: ' + error.message, null);
             }
         } else {
@@ -59,7 +59,7 @@ const pythonRoutes = [
                 return h.response({
                     status: 'success',  // Menambahkan status
                     success: true,
-                    prediction: result.sentiment  // Mengambil hasil prediksi
+                    prediction: result  // Hasil prediksi
                 }).code(200);  // Kode status 200
             } catch (error) {
                 console.error('Error during prediction:', error);
@@ -71,4 +71,5 @@ const pythonRoutes = [
         }
     }
 ];
+
 module.exports = pythonRoutes;
