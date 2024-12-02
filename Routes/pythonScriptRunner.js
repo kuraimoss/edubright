@@ -58,9 +58,12 @@ const pythonRoutes = [
                         if (error) {
                             reject(error);  // Jika terjadi error, reject promise
                         } else {
-                            // Mengambil hasil prediksi dari JSON dan mengakses "sentiment"
+                            // Menghapus karakter atau log lain yang tidak diinginkan dari hasil Python
+                            let cleanResult = result.trim(); // Hapus spasi atau karakter ekstra lainnya
+
                             try {
-                                const parsedResult = JSON.parse(result);  // Parsing hasil JSON
+                                // Memastikan hasil adalah JSON yang valid
+                                const parsedResult = JSON.parse(cleanResult);  // Parsing hasil JSON
                                 resolve(parsedResult.sentiment);  // Mengambil "sentiment" dari JSON
                             } catch (parseError) {
                                 reject('Error parsing Python output: ' + parseError.message);
@@ -86,5 +89,6 @@ const pythonRoutes = [
         }
     }
 ];
+
 
 module.exports = pythonRoutes;
