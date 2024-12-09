@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -153,7 +154,6 @@
         .copy-icon:hover {
             color: #0056b3;
         }
-
     </style>
     <script>
         function copyToClipboard(elementId) {
@@ -178,6 +178,7 @@
         });
     </script>
 </head>
+
 <body>
     <div class="sidebar">
         <h2>EduBright API</h2>
@@ -185,6 +186,9 @@
             <li><a href="#register" class="active">Register</a></li>
             <li><a href="#login">Login</a></li>
             <li><a href="#predict">Sentiment Prediction</a></li>
+            <li><a href="#comment">Comment Feedback</a></li>
+            <li><a href="#feedback-statistics">Feedback Statistics</a></li>
+
         </ul>
     </div>
     <div class="content">
@@ -221,12 +225,7 @@
 {
     "status": "error",
     "error": "The email address is already registered.",
-    "details": "Duplicate entry 'kuraimoss@edubright.com' for key 'email'",
-    "registerResult": {
-        "userId": null,
-        "name": "kuraimos",
-        "email": "kuraimoss@edubright.com"
-    }
+    "details": "Duplicate entry 'kuraimoss@edubright.com' for key 'email'"
 }
             </pre>
         </div>
@@ -261,14 +260,7 @@
             <pre>
 {
     "status": "error",
-    "error": "User not found. Please check the email address and try again.",
-    "details": "No user found with the provided email."
-}
-
-{
-    "status": "error",
-    "error": "Invalid credentials. Please check your password and try again.",
-    "details": "The provided password is incorrect."
+    "error": "User not found. Please check the email address and try again."
 }
             </pre>
         </div>
@@ -304,6 +296,95 @@
             </pre>
         </div>
 
+        <div id="comment" class="endpoint">
+            <div class="endpoint-title">Comment Feedback</div>
+            <p>
+                <span class="method">POST</span> <span class="url">/comment</span>
+            </p>
+            <h3>Request Body</h3>
+            <pre id="comment-request">
+        {
+            "user_id": "user-12345",
+            "text": "Great lesson, looking forward to more!"
+        }
+                <i class="fas fa-copy copy-icon" onclick="copyToClipboard('comment-request')"></i>
+            </pre>
+            <h3>Response - Success</h3>
+            <pre>
+        {
+            "status": "success",
+            "message": "Feedback successfully saved!",
+            "feedbackResult": {
+                "id": 1,
+                "user_id": "user-12345",
+                "comment_text": "Great lesson, looking forward to more!",
+                "feedback_value": "Awesome"
+            }
+        }
+            </pre>
+            <h3>Response - Error</h3>
+            <pre>
+        {
+            "status": "error",
+            "error": "Failed to save feedback.",
+            "details": "Error message here"
+        }
+            </pre>
+        </div>
+
+        <div id="feedback-statistics" class="endpoint">
+            <div class="endpoint-title">Feedback Statistics</div>
+            <p>
+                <span class="method">GET</span> <span class="url">/feedback-statistics</span>
+            </p>
+            <h3>Response - Success</h3>
+            <pre>
+        {
+            "status": "success",
+            "message": "Feedback statistics retrieved successfully.",
+            "totalFeedbacks": 150,
+            "statistics": [
+                {
+                    "feedback": "Awful",
+                    "count": 5,
+                    "percentage": "3.33"
+                },
+                {
+                    "feedback": "Poor",
+                    "count": 10,
+                    "percentage": "6.67"
+                },
+                {
+                    "feedback": "Neutral",
+                    "count": 20,
+                    "percentage": "13.33"
+                },
+                {
+                    "feedback": "Good",
+                    "count": 50,
+                    "percentage": "33.33"
+                },
+                {
+                    "feedback": "Awesome",
+                    "count": 65,
+                    "percentage": "43.33"
+                }
+            ]
+        }
+            </pre>
+            <h3>Response - Error</h3>
+            <pre>
+        {
+            "status": "error",
+            "message": "Failed to retrieve feedback statistics.",
+            "details": "Error message here"
+        }
+            </pre>
+        </div>
+
+
+
     </div>
 </body>
+
 </html>
