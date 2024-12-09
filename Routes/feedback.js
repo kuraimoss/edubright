@@ -72,13 +72,6 @@ module.exports = [
   },
   {
     method: "GET",
-    path: "/comment",
-    handler: (request, h) => {
-      return h.file('Documentation/denied.html').code(403);
-    },
-  },
-  {
-    method: "GET",
     path: "/feedback-statistics",
     handler: async (request, h) => {
       try {
