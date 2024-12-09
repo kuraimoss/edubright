@@ -11,16 +11,19 @@ module.exports = [
       validate: {
         payload: Joi.object({
           user_id: Joi.string().required(),  // user_id yang harus ada
-          comment_text: Joi.string().min(1).required(),  // Text komentar
+          text: Joi.string().min(1).required(),  // Text komentar yang akan dikirim ke API
         }),
       },
     },
     handler: async (request, h) => {
-      const { user_id, comment_text } = request.payload;
+      const { user_id, text } = request.payload;
 
       try {
-        // Mengambil nilai feedback_value dari API eksternal
-        const predictionResponse = await axios.post('http://34.128.104.99/predict');
+        // Mengambil nilai feedback_value dari API eksternal dengan mengirim "text"
+        const predictionResponse = await axios.post('http://34.128.104.99/predict', {
+          text: text
+        });
+
         const feedback_value = predictionResponse.data.prediction;  // Ambil "prediction" dari API
 
         // Menyimpan data feedback ke database
@@ -29,7 +32,7 @@ module.exports = [
           VALUES (?, ?, ?)
         `;
 
-        const [result] = await db.query(query, [user_id, comment_text, feedback_value]);
+        const [result] = await db.query(query, [user_id, text, feedback_value]);
 
         return h
           .response({
@@ -38,7 +41,7 @@ module.exports = [
             feedbackResult: {
               id: result.insertId,
               user_id,
-              comment_text,
+              comment_text: text,
               feedback_value,
             },
           })
