@@ -1,13 +1,15 @@
-require("dotenv").config();
-const Joi = require("joi");
-const axios = require("axios");
-const db = require("../database");
+require("dotenv").config(); // Memuat variabel environment dari file .env
+const Joi = require("joi"); // Library untuk validasi input
+const axios = require("axios"); // Library untuk melakukan HTTP request
+const db = require("../database"); // Modul koneksi database
 
 module.exports = [
   {
+    // Route untuk mengirim komentar/feedback
     method: "POST",
     path: "/comment",
     options: {
+      // Validasi input menggunakan Joi
       validate: {
         payload: Joi.object({
           user_id: Joi.string().required(),  // user_id yang harus ada
@@ -32,8 +34,10 @@ module.exports = [
           VALUES (?, ?, ?)
         `;
 
+        // Eksekusi query untuk menyimpan feedback
         const [result] = await db.query(query, [user_id, text, feedback_value]);
 
+        // Respon sukses jika penyimpanan feedback berhasil
         return h
           .response({
             status: "success",
@@ -47,12 +51,16 @@ module.exports = [
           })
           .code(201);
       } catch (err) {
+        // Penanganan error yang mungkin terjadi
         console.error("Error: ", err);
         let errorMessage = "Failed to save feedback.";
+        
+        // Penanganan error spesifik untuk API tidak dapat dijangkau
         if (err.response && err.response.status === 404) {
           errorMessage = "Prediction API not reachable.";
         }
 
+        // Respon error jika penyimpanan feedback gagal
         return h
           .response({
             status: "error",
@@ -64,6 +72,7 @@ module.exports = [
     },
   },
   {
+    // Route GET /comment ditolak
     method: "GET",
     path: "/comment",
     handler: (request, h) => {
@@ -71,6 +80,7 @@ module.exports = [
     },
   },
   {
+    // Route untuk mengambil statistik feedback
     method: "GET",
     path: "/feedback-statistics",
     handler: async (request, h) => {
@@ -87,12 +97,18 @@ module.exports = [
 
         // Hitung persentase tiap feedback_value
         const statistics = ['Awful', 'Poor', 'Neutral', 'Good', 'Awesome'].map((feedback) => {
+          // Cari data untuk setiap kategori feedback
           const feedbackRow = rows.find((row) => row.feedback_value === feedback);
           const count = feedbackRow ? feedbackRow.count : 0;
+          
+          // Hitung persentase, dengan penanganan pembagi nol
           const percentage = totalFeedbacks > 0 ? (count / totalFeedbacks) * 100 : 0;
+          
+          // Kembalikan objek statistik untuk setiap kategori
           return { feedback, count, percentage: percentage.toFixed(2) };
         });
 
+        // Respon sukses dengan statistik feedback
         return h.response({
           status: "success",
           message: "Feedback statistics retrieved successfully.",
@@ -100,6 +116,7 @@ module.exports = [
           statistics,
         }).code(200);
       } catch (err) {
+        // Penanganan error saat mengambil statistik
         console.error("Error fetching feedback statistics:", err);
         return h.response({
           status: "error",
